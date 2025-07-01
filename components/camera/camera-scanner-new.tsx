@@ -40,7 +40,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   const animationRef = useRef<number | null>(null)
   const [isQuaggaInitialized, setIsQuaggaInitialized] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string[]>([])
-  const codeReaderRef = useRef<any>(null)
 
   // Enhanced mock product database with barcodes and QR codes
   const mockProducts = [
@@ -186,7 +185,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         const { BrowserMultiFormatReader } = await import("@zxing/library")
         
         const codeReader = new BrowserMultiFormatReader()
-        codeReaderRef.current = codeReader
         
         // Start scanning
         const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoRef.current!)
@@ -244,28 +242,13 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
 
   const stopBarcodeScanner = () => {
     addDebugInfo("Stopping barcode scanner...")
-    if (codeReaderRef.current) {
-      try {
-        codeReaderRef.current.reset()
-        addDebugInfo("ZXing scanner reset successfully")
-      } catch (error) {
-        addDebugInfo(`Error resetting ZXing scanner: ${error}`)
-      }
-      codeReaderRef.current = null
-    }
+    // ZXing cleanup would go here
     setIsQuaggaInitialized(false)
   }
 
   const initializeCamera = async () => {
     try {
       addDebugInfo("Requesting camera permission...")
-      
-      // Check if camera is already in use
-      if (streamRef.current) {
-        addDebugInfo("Camera already initialized, cleaning up first...")
-        stopCamera()
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment", // Use rear camera if available
@@ -279,65 +262,24 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         streamRef.current = stream
         setHasPermission(true)
         addDebugInfo("Camera initialized successfully")
-        
-        // Add event listener for when video metadata is loaded
-        videoRef.current.onloadedmetadata = () => {
-          addDebugInfo("Video metadata loaded")
-        }
-        
-        // Add event listener for video errors
-        videoRef.current.onerror = (error) => {
-          addDebugInfo(`Video error: ${error}`)
-          cleanupEverything()
-        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       addDebugInfo(`Camera error: ${errorMessage}`)
       setHasPermission(false)
-      
-      // Clean up any partial initialization
-      stopCamera()
     }
   }
 
   const stopCamera = () => {
-    addDebugInfo("🛑 Stopping camera...")
     if (streamRef.current) {
-      const tracks = streamRef.current.getTracks()
-      tracks.forEach((track) => {
-        track.stop()
-        addDebugInfo(`✅ Stopped ${track.kind} track (state: ${track.readyState})`)
-      })
+      addDebugInfo("Stopping camera...")
+      streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
-      addDebugInfo("📹 Camera stream cleared")
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null
-      addDebugInfo("🎥 Video element cleared")
     }
     setHasPermission(null)
-    addDebugInfo("✨ Camera cleanup completed")
-  }
-
-  const cleanupEverything = () => {
-    addDebugInfo("Cleaning up all resources...")
-    stopCamera()
-    stopBarcodeScanner()
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current)
-      scanTimeoutRef.current = null
-    }
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-      animationRef.current = null
-    }
-    setIsScanning(false)
-    setScanningState("idle")
-    setScanProgress(0)
-    setDetectedProduct(null)
-    setDetectedCode(null)
-    setScanType(null)
   }
 
   const startScanning = () => {
@@ -381,18 +323,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     stopBarcodeScanner()
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current)
-      scanTimeoutRef.current = null
     }
-    // Reset detected data
-    setDetectedProduct(null)
-    setDetectedCode(null)
-    setScanType(null)
-  }
-
-  const handleClose = () => {
-    addDebugInfo("Handling modal close...")
-    cleanupEverything()
-    onClose()
   }
 
   const handleScanComplete = () => {
@@ -403,7 +334,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         detectedCode: detectedCode,
         scanTimestamp: new Date().toISOString(),
       })
-      cleanupEverything()
       onClose()
     }
   }
@@ -448,50 +378,24 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     setScanProgress(0)
   }
 
-  // Cleanup on unmount or when modal closes
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanupEverything()
+      stopCamera()
+      stopBarcodeScanner()
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current)
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
     }
   }, [])
 
-  // Initialize/cleanup camera based on modal state
+  // Initialize camera when modal opens
   useEffect(() => {
     if (isOpen && hasPermission === null) {
       initializeCamera()
-    } else if (!isOpen && hasPermission !== null) {
-      // Modal closed, cleanup everything
-      cleanupEverything()
-    }
-  }, [isOpen])
-
-  // Cleanup when component receives new isOpen prop
-  useEffect(() => {
-    if (!isOpen) {
-      cleanupEverything()
-    }
-  }, [isOpen])
-
-  // Handle page visibility changes to stop camera when page is hidden
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && isOpen) {
-        addDebugInfo("Page hidden, cleaning up camera...")
-        cleanupEverything()
-      }
-    }
-
-    const handleBeforeUnload = () => {
-      addDebugInfo("Page unloading, cleaning up camera...")
-      cleanupEverything()
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [isOpen])
 
@@ -507,7 +411,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         {/* Camera Header */}
         <div className="relative z-10 bg-black/90 backdrop-blur-sm">
           <div className="flex items-center justify-between p-4">
-            <Button onClick={handleClose} variant="ghost" size="sm" className="text-white hover:bg-white/20">
+            <Button onClick={onClose} variant="ghost" size="sm" className="text-white hover:bg-white/20">
               <X className="w-5 h-5" />
             </Button>
 
@@ -529,12 +433,10 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
           {debugInfo.length > 0 && (
             <div className="px-4 pb-2">
               <details className="text-white/60 text-xs">
-                <summary className="cursor-pointer hover:text-white/80">
-                  🔧 Debug Info ({debugInfo.length})
-                </summary>
-                <div className="mt-1 space-y-1 max-h-32 overflow-y-auto bg-black/50 rounded p-2">
+                <summary className="cursor-pointer">Debug Info</summary>
+                <div className="mt-1 space-y-1">
                   {debugInfo.map((info, index) => (
-                    <div key={index} className="font-mono text-xs">{info}</div>
+                    <div key={index}>{info}</div>
                   ))}
                 </div>
               </details>
@@ -724,7 +626,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         {hasPermission && scanningState === "idle" && (
           <div className="p-4">
             <div className="flex items-center justify-center space-x-4">
-              <Button onClick={handleClose} variant="ghost" size="lg" className="text-white hover:bg-white/20">
+              <Button onClick={onClose} variant="ghost" size="lg" className="text-white hover:bg-white/20">
                 Cancel
               </Button>
               <Button

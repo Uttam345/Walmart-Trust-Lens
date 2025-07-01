@@ -200,65 +200,65 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
           
           setDetectedCode(code)
           setScanType("barcode")
-          setDetectedProduct(product)
-          setScanningState("success")
-          setScanProgress(100)
+          setScanningState("processing")
           
-          // Auto-complete scan after short delay
           setTimeout(() => {
-            if (product && !(product as any).isUnknown) {
-              handleScanComplete()
-            }
-          }, 2000)
+            setDetectedProduct(product)
+            setScanningState("success")
+            setScanProgress(100)
+          }, 1000)
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        addDebugInfo(`ZXing error: ${errorMessage}`)
-        
-        // Fallback to mock detection
-        setTimeout(() => {
-          simulateBarcodeDetection()
-        }, 3000)
+        addDebugInfo(`Failed to initialize ZXing: ${error instanceof Error ? error.message : String(error)}`)
+        console.error("Failed to initialize ZXing:", error)
+        // Fallback to mock scanning
+        startMockScanning()
       }
     }
-
+    
     setupScanner()
   }
 
-  // Simulate barcode detection for demo purposes
-  const simulateBarcodeDetection = () => {
-    addDebugInfo("Simulating barcode detection...")
-    
-    // Simulate finding a random product
-    const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)]
-    const fakeBarcode = randomProduct.barcode
-
-    setDetectedCode(fakeBarcode)
-    setScanType("barcode")
-    setDetectedProduct(randomProduct)
-    setScanningState("success")
-    setScanProgress(100)
-
-    addDebugInfo(`Simulated detection: ${randomProduct.name}`)
+  const stopBarcodeScanner = () => {
+    try {
+      addDebugInfo("🛑 Stopping ZXing scanner...")
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset()
+        addDebugInfo("✅ ZXing scanner reset successfully")
+        codeReaderRef.current = null
+      }
+      setIsQuaggaInitialized(false)
+      addDebugInfo("✨ ZXing scanner stopped")
+    } catch (error) {
+      addDebugInfo(`Error stopping ZXing: ${error instanceof Error ? error.message : String(error)}`)
+      console.error("Error stopping ZXing:", error)
+    }
   }
 
-  const stopBarcodeScanner = () => {
-    addDebugInfo("Stopping barcode scanner...")
-    if (codeReaderRef.current) {
-      try {
-        codeReaderRef.current.reset()
-        addDebugInfo("ZXing scanner reset successfully")
-      } catch (error) {
-        addDebugInfo(`Error resetting ZXing scanner: ${error}`)
-      }
-      codeReaderRef.current = null
-    }
-    setIsQuaggaInitialized(false)
+  const startMockScanning = () => {
+    addDebugInfo("Using mock barcode scanning")
+
+    // Simulate barcode detection after 3 seconds
+    setTimeout(() => {
+      // Generate a random barcode for demo
+      const randomBarcode = Math.floor(Math.random() * 900000000000 + 100000000000).toString()
+      const product = findProductByBarcode(randomBarcode)
+
+      setDetectedCode(randomBarcode)
+      setScanType("barcode")
+      setScanningState("processing")
+
+      setTimeout(() => {
+        setDetectedProduct(product)
+        setScanningState("success")
+        setScanProgress(100)
+      }, 1000)
+    }, 3000)
   }
 
   const initializeCamera = async () => {
     try {
-      addDebugInfo("Requesting camera permission...")
+      addDebugInfo("🎥 Requesting camera permission...")
       
       // Check if camera is already in use
       if (streamRef.current) {
@@ -278,22 +278,22 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         videoRef.current.srcObject = stream
         streamRef.current = stream
         setHasPermission(true)
-        addDebugInfo("Camera initialized successfully")
+        addDebugInfo("✅ Camera initialized successfully")
         
         // Add event listener for when video metadata is loaded
         videoRef.current.onloadedmetadata = () => {
-          addDebugInfo("Video metadata loaded")
+          addDebugInfo("📹 Video metadata loaded")
         }
         
         // Add event listener for video errors
         videoRef.current.onerror = (error) => {
-          addDebugInfo(`Video error: ${error}`)
+          addDebugInfo(`❌ Video error: ${error}`)
           cleanupEverything()
         }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
-      addDebugInfo(`Camera error: ${errorMessage}`)
+      addDebugInfo(`❌ Camera error: ${errorMessage}`)
       setHasPermission(false)
       
       // Clean up any partial initialization
@@ -321,7 +321,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   }
 
   const cleanupEverything = () => {
-    addDebugInfo("Cleaning up all resources...")
+    addDebugInfo("🧹 Cleaning up all resources...")
     stopCamera()
     stopBarcodeScanner()
     if (scanTimeoutRef.current) {
@@ -340,41 +340,55 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     setScanType(null)
   }
 
+  const handleClose = () => {
+    addDebugInfo("🚪 Handling modal close...")
+    cleanupEverything()
+    onClose()
+  }
+
   const startScanning = () => {
-    addDebugInfo("Starting scan...")
+    addDebugInfo("🚀 Starting scan...")
     setIsScanning(true)
     setScanningState("scanning")
     setScanProgress(0)
-    setDetectedProduct(null)
     setDetectedCode(null)
     setScanType(null)
 
-    // Initialize barcode scanner
+    // Try to initialize real barcode scanner
     initializeBarcodeScanner()
 
-    // Simulate scan progress
+    // Simulate scanning progress
     const progressInterval = setInterval(() => {
       setScanProgress((prev) => {
-        if (prev >= 100) {
+        if (prev >= 90) {
           clearInterval(progressInterval)
-          return 100
+          return 90
         }
-        return prev + 2
+        return prev + 5
       })
     }, 100)
 
-    // Set timeout for scan completion
+    // Fallback timeout if no barcode detected
     scanTimeoutRef.current = setTimeout(() => {
-      if (scanningState === "scanning") {
-        addDebugInfo("Scan timeout, using fallback detection")
-        simulateBarcodeDetection()
-      }
+      addDebugInfo("⏰ Scan timeout reached, falling back to product recognition")
       clearInterval(progressInterval)
-    }, 5000)
+      stopBarcodeScanner()
+
+      // If no barcode detected, simulate product recognition
+      setScanType("product")
+      setScanningState("processing")
+
+      setTimeout(() => {
+        const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)]
+        setDetectedProduct(randomProduct)
+        setScanningState("success")
+        setScanProgress(100)
+      }, 1000)
+    }, 15000) // Increased timeout for better real scanning
   }
 
   const stopScanning = () => {
-    addDebugInfo("Stopping scan...")
+    addDebugInfo("⏹️ Stopping scan...")
     setIsScanning(false)
     setScanningState("idle")
     setScanProgress(0)
@@ -387,12 +401,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     setDetectedProduct(null)
     setDetectedCode(null)
     setScanType(null)
-  }
-
-  const handleClose = () => {
-    addDebugInfo("Handling modal close...")
-    cleanupEverything()
-    onClose()
   }
 
   const handleScanComplete = () => {
@@ -437,16 +445,41 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
 
   const toggleFlash = () => {
     setFlashEnabled(!flashEnabled)
+    addDebugInfo(`💡 Flash ${flashEnabled ? 'disabled' : 'enabled'}`)
     // In a real implementation, this would control the camera flash
   }
 
   const retryScanning = () => {
+    addDebugInfo("🔄 Retrying scan...")
     setDetectedProduct(null)
     setDetectedCode(null)
     setScanType(null)
     setScanningState("idle")
     setScanProgress(0)
   }
+
+  // Handle page visibility changes to stop camera when page is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isOpen) {
+        addDebugInfo("👁️ Page hidden, cleaning up camera...")
+        cleanupEverything()
+      }
+    }
+
+    const handleBeforeUnload = () => {
+      addDebugInfo("🚪 Page unloading, cleaning up camera...")
+      cleanupEverything()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isOpen])
 
   // Cleanup on unmount or when modal closes
   useEffect(() => {
@@ -469,29 +502,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   useEffect(() => {
     if (!isOpen) {
       cleanupEverything()
-    }
-  }, [isOpen])
-
-  // Handle page visibility changes to stop camera when page is hidden
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && isOpen) {
-        addDebugInfo("Page hidden, cleaning up camera...")
-        cleanupEverything()
-      }
-    }
-
-    const handleBeforeUnload = () => {
-      addDebugInfo("Page unloading, cleaning up camera...")
-      cleanupEverything()
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [isOpen])
 
@@ -529,12 +539,10 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
           {debugInfo.length > 0 && (
             <div className="px-4 pb-2">
               <details className="text-white/60 text-xs">
-                <summary className="cursor-pointer hover:text-white/80">
-                  🔧 Debug Info ({debugInfo.length})
-                </summary>
-                <div className="mt-1 space-y-1 max-h-32 overflow-y-auto bg-black/50 rounded p-2">
+                <summary className="cursor-pointer">Debug Info</summary>
+                <div className="mt-1 space-y-1">
                   {debugInfo.map((info, index) => (
-                    <div key={index} className="font-mono text-xs">{info}</div>
+                    <div key={index}>{info}</div>
                   ))}
                 </div>
               </details>
@@ -687,33 +695,72 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                     </p>
                     {scanType && (
                       <p className="text-xs text-gray-500 capitalize">
-                        Detected via {scanType} scan
+                        Detected via {scanType} {detectedCode && `(${detectedCode.slice(-6)})`}
                       </p>
                     )}
+                    {detectedProduct.isUnknown && (
+                      <p className="text-xs text-orange-600 font-medium">Product not in database</p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-yellow-500">★</span>
+                      <span className="font-medium text-sm">{detectedProduct.rating}</span>
+                    </div>
+                    <p className="text-xs text-gray-600">{detectedProduct.reviews} reviews</p>
+                  </div>
+                </div>
+
+                {/* Quick social proof */}
+                <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                  <div
+                    className={`${detectedProduct.isUnknown ? "bg-orange-50" : "bg-blue-50"} rounded p-2 text-center`}
+                  >
+                    <div
+                      className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-blue-600"}`}
+                    >
+                      {detectedProduct.socialProof.friendsRecommend}%
+                    </div>
+                    <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-blue-700"}`}>
+                      Friends recommend
+                    </div>
+                  </div>
+                  <div
+                    className={`${detectedProduct.isUnknown ? "bg-orange-50" : "bg-green-50"} rounded p-2 text-center`}
+                  >
+                    <div
+                      className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}
+                    >
+                      {detectedProduct.socialProof.locationPopularity}%
+                    </div>
+                    <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-green-700"}`}>
+                      Local popularity
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button
-                    onClick={handleScanComplete}
-                    size="sm"
-                    className={`flex-1 ${
-                      detectedProduct.isUnknown ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"
-                    }`}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    {detectedProduct.isUnknown ? "Continue Anyway" : "Select Product"}
-                  </Button>
-                  
-                  {detectedProduct.isUnknown && (
-                    <Button onClick={handleSearchProduct} size="sm" variant="outline" className="border-orange-400 text-orange-600">
-                      <Search className="w-4 h-4" />
-                    </Button>
+                  {detectedProduct.isUnknown ? (
+                    <>
+                      <Button onClick={handleSearchProduct} className="flex-1 bg-orange-600 hover:bg-orange-700">
+                        <Search className="w-4 h-4 mr-2" />
+                        Search Online
+                      </Button>
+                      <Button onClick={retryScanning} variant="outline" size="sm">
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button onClick={handleScanComplete} className="flex-1 bg-green-600 hover:bg-green-700">
+                        <Zap className="w-4 h-4 mr-2" />
+                        View Social Proof
+                      </Button>
+                      <Button onClick={retryScanning} variant="outline" size="sm">
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    </>
                   )}
-                  
-                  <Button onClick={retryScanning} size="sm" variant="outline">
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -735,7 +782,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                 <Camera className="w-8 h-8" />
               </Button>
             </div>
-            <p className="text-center text-white/80 text-sm mt-3">Tap to scan barcodes or QR codes</p>
+            <p className="text-center text-white/80 text-sm mt-3">Tap to scan barcodes, QR codes, or product images</p>
           </div>
         )}
 

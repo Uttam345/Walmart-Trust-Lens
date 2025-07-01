@@ -7,8 +7,15 @@ import { QuickStartBanner } from "./onboarding/quick-start-banner"
 export function OnboardingTrigger() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showQuickStartBanner, setShowQuickStartBanner] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem("walmart-onboarding-completed")
     const userData = localStorage.getItem("walmart-user-data")
@@ -37,7 +44,7 @@ export function OnboardingTrigger() {
         console.error("Error parsing user data:", error)
       }
     }
-  }, [])
+  }, [mounted])
 
   const handleOnboardingComplete = (data: any) => {
     try {
@@ -85,12 +92,14 @@ export function OnboardingTrigger() {
 
   return (
     <>
-      {showQuickStartBanner && (
+      {mounted && showQuickStartBanner && (
         <div className="fixed bottom-4 right-4 z-40 max-w-md">
           <QuickStartBanner onStartSetup={handleStartSetupFromBanner} />
         </div>
       )}
-      <OnboardingFlow isOpen={showOnboarding} onClose={handleClose} onComplete={handleOnboardingComplete} />
+      {mounted && (
+        <OnboardingFlow isOpen={showOnboarding} onClose={handleClose} onComplete={handleOnboardingComplete} />
+      )}
     </>
   )
 }

@@ -1,25 +1,50 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { AIChat } from "@/components/ai-chat"
-import { QuickActions } from "@/components/quick-actions"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function AssistantPage() {
+  const [chatContext, setChatContext] = useState({
+    scannedProducts: [],
+    userPreferences: {},
+    currentLocation: 'Unknown',
+  })
+
+  useEffect(() => {
+    // Load user context from localStorage
+    try {
+      const userData = localStorage.getItem("walmart-user-data")
+      const scannedHistory = localStorage.getItem("walmart-scan-history")
+      
+      if (userData) {
+        const parsedUserData = JSON.parse(userData)
+        setChatContext(prev => ({
+          ...prev,
+          userPreferences: parsedUserData,
+        }))
+      }
+      
+      if (scannedHistory) {
+        const parsedHistory = JSON.parse(scannedHistory)
+        setChatContext(prev => ({
+          ...prev,
+          scannedProducts: parsedHistory.slice(-5), // Last 5 scanned products
+        }))
+      }
+    } catch (error) {
+      console.error('Error loading user context:', error)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Shopping Assistant</h1>
-          <p className="text-gray-600">Get personalized recommendations and shopping advice</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
-            <AIChat />
-          </div>
-          <div>
-            <QuickActions />
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AIChat context={chatContext} />
       </div>
+      <Toaster />
     </div>
   )
 }

@@ -7,11 +7,38 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, Upload, Search, Star, TrendingUp, Users, MapPin, Heart, Zap } from "lucide-react"
-import { CameraScanner } from "./camera/camera-scanner"
+import { CameraScanner } from "./camera/camera-scanner-backup-fixed"
 
 function ScannerContent() {
   const [isScanning, setIsScanning] = useState(false)
-  const [scannedProduct, setScannedProduct] = useState(null)
+  type Friend = {
+    name: string
+    avatar: string
+    action: string
+    timeAgo: string
+  }
+
+  type SocialProof = {
+    friendsPurchased: number
+    friendsRecommend: number
+    locationPopularity: number
+    userClassPreference: number
+    trendingScore: number
+    recentActivity: string
+  }
+
+  type Product = {
+    id: string
+    name: string
+    price: string
+    rating: number
+    reviews: number
+    image: string
+    socialProof: SocialProof
+    friends: Friend[]
+  }
+
+  const [scannedProduct, setScannedProduct] = useState<Product | null>(null)
   const [showCamera, setShowCamera] = useState(false)
   const searchParams = useSearchParams()
   const productId = searchParams?.get("product")

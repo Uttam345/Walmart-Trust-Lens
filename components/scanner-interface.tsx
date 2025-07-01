@@ -4,11 +4,29 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, Upload, Search, Star, TrendingUp, Users } from "lucide-react"
-import { CameraScanner } from "./camera/camera-scanner"
+import { CameraScanner } from "./camera/camera-scanner-backup-fixed"
+
+interface SocialProof {
+  friendsPurchased?: number
+  friendsRecommend?: number
+  locationPopularity?: number
+  trendingScore?: number
+  recentActivity?: string
+}
+
+interface ScannedProduct {
+  id: string
+  name: string
+  price: string
+  rating?: number
+  reviews?: number
+  image?: string
+  socialProof?: SocialProof
+}
 
 export function ScannerInterface() {
   const [isScanning, setIsScanning] = useState(false)
-  const [scannedProduct, setScannedProduct] = useState(null)
+  const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null)
   const [showCamera, setShowCamera] = useState(false)
 
   const handleScan = () => {
