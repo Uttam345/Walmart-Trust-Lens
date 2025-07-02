@@ -120,12 +120,33 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
             let product: ProcessedProduct | null = null
             try {
               product = await lookupBarcode(code)
+              addDebugInfo(`API returned: ${JSON.stringify(product)}`)
             } catch (e) {
               addDebugInfo(`Barcode API error: ${e instanceof Error ? e.message : String(e)}`)
             }
             setTimeout(() => {
-              setDetectedProduct(product)
-              setScanningState(product ? "success" : "not_found")
+              // Defensive: ensure product is not undefined and has at least a name or image
+              if (product && (product.name || product.image)) {
+                setDetectedProduct({
+                  ...product,
+                  name: product.name || "Unknown Product",
+                  image: product.image || "/placeholder.svg",
+                  price: product.price || "N/A",
+                  rating: product.rating ?? 0,
+                  reviews: product.reviews ?? 0,
+                  category: product.category || "",
+                  brand: product.brand || "",
+                  manufacturer: product.manufacturer || "",
+                  description: product.description || "",
+                  features: product.features || [],
+                  stores: product.stores || [],
+                  socialProof: product.socialProof || undefined,
+                })
+                setScanningState("success")
+              } else {
+                setDetectedProduct(null)
+                setScanningState("not_found")
+              }
               setScanProgress(100)
             }, 1000)
 
