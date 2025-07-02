@@ -17,7 +17,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
-import { lookupBarcode, generateMockProduct, type ProcessedProduct } from "@/lib/barcode-api"
+import { lookupBarcode, type ProcessedProduct } from "@/lib/barcode-api"
 import {
   X,
   Camera,
@@ -57,134 +57,9 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   const [debugInfo, setDebugInfo] = useState<string[]>([])
   const codeReaderRef = useRef<any>(null)
 
-  // Enhanced mock product database with barcodes and QR codes
-  const mockProducts = [
-    {
-      id: "honey123",
-      name: "Great Value Organic Honey",
-      price: "$4.98",
-      rating: 4.8,
-      reviews: 2847,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: "123456789012",
-      qrCode: "walmart://product/honey123",
-      upc: "012345678901",
-      socialProof: {
-        friendsPurchased: 3,
-        friendsRecommend: 89,
-        locationPopularity: 76,
-        trendingScore: 85,
-      },
-    },
-    {
-      id: "detergent456",
-      name: "Tide Ultra Concentrated Detergent",
-      price: "$12.97",
-      rating: 4.6,
-      reviews: 5234,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: "987654321098",
-      qrCode: "walmart://product/detergent456",
-      upc: "098765432109",
-      socialProof: {
-        friendsPurchased: 2,
-        friendsRecommend: 94,
-        locationPopularity: 82,
-        trendingScore: 78,
-      },
-    },
-    {
-      id: "cereal789",
-      name: "Cheerios Original Cereal",
-      price: "$5.48",
-      rating: 4.7,
-      reviews: 3456,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: "456789123456",
-      qrCode: "walmart://product/cereal789",
-      upc: "045678912345",
-      socialProof: {
-        friendsPurchased: 4,
-        friendsRecommend: 91,
-        locationPopularity: 88,
-        trendingScore: 82,
-      },
-    },
-    {
-      id: "milk101",
-      name: "Great Value 2% Milk",
-      price: "$3.28",
-      rating: 4.5,
-      reviews: 1892,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: "789123456789",
-      qrCode: "walmart://product/milk101",
-      upc: "078912345678",
-      socialProof: {
-        friendsPurchased: 5,
-        friendsRecommend: 87,
-        locationPopularity: 94,
-        trendingScore: 75,
-      },
-    },
-  ]
-
   const addDebugInfo = (info: string) => {
     console.log("Scanner Debug:", info)
     setDebugInfo((prev) => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${info}`])
-  }
-
-  // Generate a mock product for unknown barcodes
-  const generateMockProduct = (barcode: string) => {
-    const productNames = ["Unknown Product", "Scanned Item", "Walmart Product", "Store Brand Item", "Generic Product"]
-
-    const randomName = productNames[Math.floor(Math.random() * productNames.length)]
-    const randomPrice = (Math.random() * 20 + 2).toFixed(2)
-    const randomRating = (Math.random() * 1.5 + 3.5).toFixed(1)
-    const randomReviews = Math.floor(Math.random() * 5000 + 100)
-
-    return {
-      id: `unknown_${barcode}`,
-      name: `${randomName} (${barcode.slice(-6)})`,
-      price: `$${randomPrice}`,
-      rating: Number.parseFloat(randomRating),
-      reviews: randomReviews,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: barcode,
-      isUnknown: true,
-      socialProof: {
-        friendsPurchased: Math.floor(Math.random() * 3),
-        friendsRecommend: Math.floor(Math.random() * 40 + 60),
-        locationPopularity: Math.floor(Math.random() * 30 + 50),
-        trendingScore: Math.floor(Math.random() * 50 + 30),
-      },
-    }
-  }
-
-  // Find product by barcode with flexible matching
-  const findProductByBarcode = (code: string) => {
-    addDebugInfo(`Looking for product with code: ${code}`)
-
-    // First try exact match
-    let product = mockProducts.find((p) => p.barcode === code || p.upc === code || p.qrCode === code)
-
-    if (product) {
-      addDebugInfo(`Found exact match: ${product.name}`)
-      return product
-    }
-
-    // Try partial matches (last 6-8 digits)
-    const codeEnd = code.slice(-6)
-    product = mockProducts.find((p) => p.barcode.includes(codeEnd) || p.upc.includes(codeEnd))
-
-    if (product) {
-      addDebugInfo(`Found partial match: ${product.name}`)
-      return product
-    }
-
-    // If no match found, generate a mock product
-    addDebugInfo(`No match found, generating mock product`)
-    return generateMockProduct(code)
   }
 
   // Real barcode detection using ZXing
@@ -215,20 +90,13 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
 
         // Set up timeout fallback - same as the other scanner
         scanTimeoutRef.current = setTimeout(() => {
-          addDebugInfo("⏰ ZXing scan timeout reached, falling back to demo product")
+          addDebugInfo("⏰ ZXing scan timeout reached, no product found")
           clearInterval(progressInterval)
           stopBarcodeScanner()
-
-          // Fall back to demo product
           setScanType("product")
-          setScanningState("processing")
-
-          setTimeout(() => {
-            const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)]
-            setDetectedProduct(randomProduct)
-            setScanningState("success")
-            setScanProgress(100)
-          }, 1000)
+          setScanningState("not_found")
+          setDetectedProduct(null)
+          setScanProgress(100)
         }, 15000) // 15 second timeout to match the existing timeout
         
         // Start continuous scanning
@@ -255,13 +123,9 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
             } catch (e) {
               addDebugInfo(`Barcode API error: ${e instanceof Error ? e.message : String(e)}`)
             }
-            if (!product) {
-              addDebugInfo("No product found in API, using mock fallback.")
-              product = generateMockProduct(code)
-            }
             setTimeout(() => {
               setDetectedProduct(product)
-              setScanningState("success")
+              setScanningState(product ? "success" : "not_found")
               setScanProgress(100)
             }, 1000)
 
@@ -278,8 +142,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
       } catch (error) {
         addDebugInfo(`❌ Failed to initialize ZXing: ${error instanceof Error ? error.message : String(error)}`)
         console.error("Failed to initialize ZXing:", error)
-        // Fallback to mock scanning
-        startMockScanning()
       }
     }
     
@@ -300,27 +162,6 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
       addDebugInfo(`Error stopping ZXing: ${error instanceof Error ? error.message : String(error)}`)
       console.error("Error stopping ZXing:", error)
     }
-  }
-
-  const startMockScanning = () => {
-    addDebugInfo("Using mock barcode scanning")
-
-    // Simulate barcode detection after 3 seconds
-    setTimeout(() => {
-      // Generate a random barcode for demo
-      const randomBarcode = Math.floor(Math.random() * 900000000000 + 100000000000).toString()
-      const product = findProductByBarcode(randomBarcode)
-
-      setDetectedCode(randomBarcode)
-      setScanType("barcode")
-      setScanningState("processing")
-
-      setTimeout(() => {
-        setDetectedProduct(product)
-        setScanningState("success")
-        setScanProgress(100)
-      }, 1000)
-    }, 3000)
   }
 
   const initializeCamera = async () => {
@@ -446,11 +287,13 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
       setScanningState("processing")
 
       setTimeout(() => {
-        const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)]
-        setDetectedProduct(randomProduct)
-        setScanningState("success")
+        // No mockProducts, just set not found
+        setDetectedCode(null)
+        setScanType("barcode")
+        setScanningState("not_found")
+        setDetectedProduct(null)
         setScanProgress(100)
-      }, 1000)
+      }, 3000)
     }, 15000) // Increased timeout for better real scanning
   }
 
@@ -574,33 +417,118 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gradient-to-br from-black/90 via-blue-950/90 to-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Hidden canvas for image processing */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Scanner Modal Container */}
-      <div className="bg-black rounded-2xl overflow-hidden shadow-2xl w-full max-w-md mx-auto">
-        {/* Camera Header */}
-        <div className="relative z-10 bg-black/90 backdrop-blur-sm">
-          <div className="flex items-center justify-between p-4">
+      <div className="bg-white/95 dark:bg-black/95 rounded-3xl overflow-hidden shadow-2xl w-full max-w-2xl mx-auto flex flex-col md:flex-row md:h-[540px] relative">
+        {/* Left: Camera & Overlay */}
+        <div className="md:w-1/2 w-full flex flex-col bg-gradient-to-b from-gray-900/90 to-gray-800/80 relative">
+          {/* Sticky Header */}
+          <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md flex items-center justify-between p-4 border-b border-white/10">
             <Button onClick={handleClose} variant="ghost" size="sm" className="text-white hover:bg-white/20">
               <X className="w-5 h-5" />
             </Button>
-
-            <div className="text-center">
-              <h2 className="text-white font-semibold text-lg">Scanner</h2>
+            <div className="text-center flex-1">
+              <h2 className="text-white font-bold text-lg tracking-wide">Scanner</h2>
               <p className="text-white/80 text-xs">
                 {scanningState === "scanning" ? "Scanning..." : "Scan barcode or QR code"}
               </p>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Button onClick={toggleFlash} variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                {flashEnabled ? <Flash className="w-4 h-4" /> : <FlashOff className="w-4 h-4" />}
-              </Button>
-            </div>
+            <Button onClick={toggleFlash} variant="ghost" size="sm" className="text-white hover:bg-white/20">
+              {flashEnabled ? <Flash className="w-4 h-4" /> : <FlashOff className="w-4 h-4" />}
+            </Button>
           </div>
 
+          {/* Camera View Container */}
+          <div className="relative flex-1 flex items-center justify-center aspect-square bg-gray-900">
+            {hasPermission === false ? (
+              <div className="flex items-center justify-center h-full w-full">
+                <div className="text-center p-6">
+                  <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Camera Access Required</h3>
+                  <p className="text-gray-300 mb-4 text-sm">Allow camera access to scan products</p>
+                  <Button onClick={initializeCamera} className="bg-blue-600 hover:bg-blue-700">
+                    Enable Camera
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-b-2xl md:rounded-bl-2xl md:rounded-br-none" />
+                {/* Scanning Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="relative">
+                    <div
+                      className={`w-72 h-48 border-2 rounded-xl transition-all duration-300 shadow-lg ${
+                        scanningState === "success"
+                          ? "border-green-400"
+                          : scanningState === "scanning"
+                          ? "border-blue-400"
+                          : scanningState === "not_found"
+                          ? "border-orange-400"
+                          : "border-white"
+                      }`}
+                    >
+                      {/* Corner indicators */}
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-white rounded-tl-lg"></div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-white rounded-tr-lg"></div>
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-white rounded-bl-lg"></div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-white rounded-br-lg"></div>
+                      {/* Scanning line animation */}
+                      {scanningState === "scanning" && (
+                        <div className="absolute inset-0 overflow-hidden rounded-xl">
+                          <div
+                            className="absolute w-full h-1 bg-blue-400 animate-pulse"
+                            style={{
+                              top: `${(scanProgress / 100) * 100}%`,
+                              boxShadow: "0 0 10px rgba(59, 130, 246, 0.8)",
+                            }}
+                          ></div>
+                          <div className="absolute inset-4 border border-blue-300 rounded opacity-50">
+                            <Scan className="w-6 h-6 text-blue-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                          </div>
+                        </div>
+                      )}
+                      {/* Success checkmark */}
+                      {scanningState === "success" && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                            <CheckCircle className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
+                      )}
+                      {/* Not found indicator */}
+                      {scanningState === "not_found" && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                            <AlertCircle className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Instruction text */}
+                    <div className="absolute top-full mt-4 left-1/2 transform -translate-x-1/2 text-center max-w-xs">
+                      <p className="text-white text-sm bg-black/70 px-4 py-2 rounded-full backdrop-bl-sm shadow">
+                        {scanningState === "idle" && "Align barcode or QR code within frame"}
+                        {scanningState === "scanning" && scanType && `Detecting ${scanType}...`}
+                        {scanningState === "scanning" && !scanType && "Scanning..."}
+                        {scanningState === "processing" && "Processing..."}
+                        {scanningState === "success" && `${scanType || "Code"} detected!`}
+                        {scanningState === "not_found" && "Code not found"}
+                      </p>
+                      {detectedCode && (
+                        <p className="text-white/80 text-xs mt-2 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                          {detectedCode}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           {/* Debug Info */}
           {debugInfo.length > 0 && (
             <div className="px-4 pb-2">
@@ -616,118 +544,21 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
           )}
         </div>
 
-        {/* Camera View Container */}
-        <div className="relative aspect-square bg-gray-900">
-          {hasPermission === false ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center p-6">
-                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">Camera Access Required</h3>
-                <p className="text-gray-300 mb-4 text-sm">Allow camera access to scan products</p>
-                <Button onClick={initializeCamera} className="bg-blue-600 hover:bg-blue-700">
-                  Enable Camera
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-
-              {/* Scanning Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                {/* Optimized Scanning Frame for Barcodes/QR Codes */}
-                <div className="relative">
-                  <div
-                    className={`w-72 h-48 border-2 rounded-lg transition-all duration-300 ${
-                      scanningState === "success"
-                        ? "border-green-400"
-                        : scanningState === "scanning"
-                          ? "border-blue-400"
-                          : scanningState === "not_found"
-                            ? "border-orange-400"
-                            : "border-white"
-                    }`}
-                  >
-                    {/* Corner indicators */}
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-white rounded-tl-lg"></div>
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-white rounded-tr-lg"></div>
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-white rounded-bl-lg"></div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-white rounded-br-lg"></div>
-
-                    {/* Scanning line animation */}
-                    {scanningState === "scanning" && (
-                      <div className="absolute inset-0 overflow-hidden rounded-lg">
-                        <div
-                          className="absolute w-full h-1 bg-blue-400 animate-pulse"
-                          style={{
-                            top: `${(scanProgress / 100) * 100}%`,
-                            boxShadow: "0 0 10px rgba(59, 130, 246, 0.8)",
-                          }}
-                        ></div>
-
-                        {/* Code detection indicators */}
-                        <div className="absolute inset-4 border border-blue-300 rounded opacity-50">
-                          <Scan className="w-6 h-6 text-blue-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Success checkmark */}
-                    {scanningState === "success" && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                          <CheckCircle className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Not found indicator */}
-                    {scanningState === "not_found" && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center animate-pulse">
-                          <AlertCircle className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Instruction text */}
-                  <div className="absolute top-full mt-4 left-1/2 transform -translate-x-1/2 text-center max-w-xs">
-                    <p className="text-white text-sm bg-black/70 px-4 py-2 rounded-full backdrop-blur-sm">
-                      {scanningState === "idle" && "Align barcode or QR code within frame"}
-                      {scanningState === "scanning" && scanType && `Detecting ${scanType}...`}
-                      {scanningState === "scanning" && !scanType && "Scanning..."}
-                      {scanningState === "processing" && "Processing..."}
-                      {scanningState === "success" && `${scanType || "Code"} detected!`}
-                      {scanningState === "not_found" && "Code not found"}
-                    </p>
-
-                    {detectedCode && (
-                      <p className="text-white/80 text-xs mt-2 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                        {detectedCode}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Progress indicator */}
-        {(scanningState === "scanning" || scanningState === "processing") && (
-          <div className="p-4">
-            <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-              <div className="flex items-center space-x-3">
+        {/* Right: Product Card & Controls */}
+        <div className="md:w-1/2 w-full flex flex-col bg-gradient-to-b from-white/95 to-blue-50/80 dark:from-black/95 dark:to-gray-900/80 p-0 md:p-6 overflow-y-auto max-h-[540px]">
+          {/* Progress indicator */}
+          {(scanningState === "scanning" || scanningState === "processing") && (
+            <div className="p-4 md:p-0">
+              <div className="bg-blue-50/80 dark:bg-gray-900/80 rounded-xl p-4 shadow flex items-center space-x-3">
                 <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                 <div className="flex-1">
-                  <div className="text-white text-sm mb-1">
+                  <div className="text-blue-900 dark:text-white text-sm mb-1">
                     {scanningState === "scanning" && !scanType && "Scanning for codes..."}
                     {scanningState === "scanning" && scanType === "barcode" && "Reading barcode..."}
                     {scanningState === "scanning" && scanType === "qr" && "Reading QR code..."}
                     {scanningState === "processing" && "Looking up product..."}
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-1.5">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                     <div
                       className="bg-blue-400 h-1.5 rounded-full transition-all duration-300"
                       style={{ width: `${scanProgress}%` }}
@@ -736,138 +567,147 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Product detected card */}
-        {scanningState === "success" && detectedProduct && (
-          <div className="p-4">
-            <Card
-              className={`${detectedProduct.isUnknown ? "border-orange-400 bg-orange-50/95" : "border-green-400 bg-white/95"} backdrop-blur-sm`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <img
-                    src={detectedProduct.image || "/placeholder.svg"}
-                    alt={detectedProduct.name}
-                    className="w-12 h-12 object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 text-sm">{detectedProduct.name}</h4>
-                    <p className={`text-lg font-bold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}>{detectedProduct.price}</p>
-                    {scanType && (
-                      <p className="text-xs text-gray-500 capitalize">
-                        Detected via {scanType} {detectedCode && `(${detectedCode.slice(-6)})`}
-                      </p>
-                    )}
-                    {/* Show extra product info if available */}
-                    {detectedProduct.category && (
-                      <p className="text-xs text-gray-700">Category: {detectedProduct.category}</p>
-                    )}
-                    {detectedProduct.brand && (
-                      <p className="text-xs text-gray-700">Brand: {detectedProduct.brand}</p>
-                    )}
-                    {detectedProduct.manufacturer && (
-                      <p className="text-xs text-gray-700">Manufacturer: {detectedProduct.manufacturer}</p>
-                    )}
-                    {detectedProduct.isUnknown && (
-                      <p className="text-xs text-orange-600 font-medium">Product not in database</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-yellow-500">★</span>
-                      <span className="font-medium text-sm">{detectedProduct.rating}</span>
+          {/* Product detected card */}
+          {scanningState === "success" && detectedProduct && (
+            <div className="p-4 md:p-0">
+              <Card className="border-green-400 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-xl">
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-3">
+                    <img
+                      src={detectedProduct.image || "/placeholder.svg"}
+                      alt={detectedProduct.name}
+                      className="w-28 h-28 object-cover rounded-xl border shadow-md bg-white"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1 truncate">{detectedProduct.name}</h4>
+                      <p className="text-xl font-bold text-green-600 mb-1">{detectedProduct.price}</p>
+                      {scanType && (
+                        <p className="text-xs text-gray-500 capitalize mb-1">
+                          Detected via {scanType} {detectedCode && `(${detectedCode.slice(-6)})`}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {detectedProduct.category && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{detectedProduct.category}</span>
+                        )}
+                        {detectedProduct.brand && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">{detectedProduct.brand}</span>
+                        )}
+                        {detectedProduct.manufacturer && (
+                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">{detectedProduct.manufacturer}</span>
+                        )}
+                      </div>
+                      {detectedProduct.description && (
+                        <p className="text-xs text-gray-700 dark:text-gray-200 mt-2 line-clamp-3">{detectedProduct.description}</p>
+                      )}
+                      {detectedProduct.features && detectedProduct.features.length > 0 && (
+                        <ul className="text-xs text-gray-700 dark:text-gray-200 mt-2 list-disc list-inside space-y-1">
+                          {detectedProduct.features.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {detectedProduct.stores && detectedProduct.stores.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 mb-1">Available at:</p>
+                          <ul className="text-xs text-gray-700 dark:text-gray-200 space-y-1">
+                            {detectedProduct.stores.map((store, i) => (
+                              <li key={i}>{store.name}: {store.price} <span className="text-xs text-gray-500">({store.availability})</span></li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-600">{detectedProduct.reviews} reviews</p>
-                  </div>
-                </div>
-
-                {/* Quick social proof */}
-                <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                  <div
-                    className={`${detectedProduct.isUnknown ? "bg-orange-50" : "bg-blue-50"} rounded p-2 text-center`}
-                  >
-                    <div
-                      className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-blue-600"}`}
-                    >
-                      {detectedProduct.socialProof?.friendsRecommend}%
-                    </div>
-                    <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-blue-700"}`}>
-                      Friends recommend
-                    </div>
-                  </div>
-                  <div
-                    className={`${detectedProduct.isUnknown ? "bg-orange-50" : "bg-green-50"} rounded p-2 text-center`}
-                  >
-                    <div
-                      className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}
-                    >
-                      {detectedProduct.socialProof?.locationPopularity}%
-                    </div>
-                    <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-green-700"}`}>
-                      Local popularity
+                    <div className="text-right min-w-[70px]">
+                      <div className="flex items-center space-x-1 justify-end">
+                        <span className="text-yellow-500">★</span>
+                        <span className="font-medium text-sm text-gray-900 dark:text-white">{detectedProduct.rating}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">{detectedProduct.reviews} reviews</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  {detectedProduct.isUnknown ? (
-                    <>
-                      <Button onClick={handleSearchProduct} className="flex-1 bg-orange-600 hover:bg-orange-700">
-                        <Search className="w-4 h-4 mr-2" />
-                        Search Online
-                      </Button>
-                      <Button onClick={retryScanning} variant="outline" size="sm">
-                        <RotateCcw className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button onClick={handleScanComplete} className="flex-1 bg-green-600 hover:bg-green-700">
-                        <Zap className="w-4 h-4 mr-2" />
-                        View Social Proof
-                      </Button>
-                      <Button onClick={retryScanning} variant="outline" size="sm">
-                        <RotateCcw className="w-4 h-4" />
-                      </Button>
-                    </>
+                  {/* Quick social proof */}
+                  {detectedProduct.socialProof && (
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                      <div className="bg-blue-50 dark:bg-blue-900 rounded p-2 text-center">
+                        <div className="font-semibold text-blue-600 dark:text-blue-300">{detectedProduct.socialProof.friendsRecommend}%</div>
+                        <div className="text-blue-700 dark:text-blue-200">Friends recommend</div>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-900 rounded p-2 text-center">
+                        <div className="font-semibold text-green-600 dark:text-green-300">{detectedProduct.socialProof.locationPopularity}%</div>
+                        <div className="text-green-700 dark:text-green-200">Local popularity</div>
+                      </div>
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Bottom Controls */}
-        {hasPermission && scanningState === "idle" && (
-          <div className="p-4">
-            <div className="flex items-center justify-center space-x-4">
-              <Button onClick={handleClose} variant="ghost" size="lg" className="text-white hover:bg-white/20">
-                Cancel
-              </Button>
-              <Button
-                onClick={startScanning}
-                size="lg"
-                className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 p-0"
-              >
-                <Camera className="w-8 h-8" />
-              </Button>
+                  <div className="flex space-x-2 mt-2">
+                    <Button onClick={handleScanComplete} className="flex-1 bg-green-600 hover:bg-green-700">
+                      <Zap className="w-4 h-4 mr-2" />
+                      View Social Proof
+                    </Button>
+                    <Button onClick={retryScanning} variant="outline" size="sm">
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-center text-white/80 text-sm mt-3">Tap to scan barcodes, QR codes, or product images</p>
-          </div>
-        )}
+          )}
 
-        {/* Scanning controls */}
-        {scanningState === "scanning" && (
-          <div className="p-4">
-            <div className="flex justify-center">
-              <Button onClick={stopScanning} variant="outline" className="border-white text-white hover:bg-white/20">
-                Stop Scanning
-              </Button>
+          {/* Not found card */}
+          {scanningState === "not_found" && (
+            <div className="p-4 md:p-0">
+              <Card className="border-orange-400 bg-orange-50/95 dark:bg-orange-900/95 backdrop-blur-sm shadow-xl">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <img src="/placeholder.svg" alt="Not found" className="w-20 h-20 object-cover rounded-lg" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-orange-700 dark:text-orange-300 text-base mb-1">Product not found</h4>
+                      <p className="text-xs text-orange-600 dark:text-orange-200">No product details available for this barcode.</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2 mt-2">
+                    <Button onClick={retryScanning} variant="outline" size="sm">
+                      <RotateCcw className="w-4 h-4" />
+                      Try Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Bottom Controls */}
+          {hasPermission && scanningState === "idle" && (
+            <div className="p-4 md:p-0 flex flex-col h-full justify-end">
+              <div className="flex items-center justify-center space-x-4">
+                <Button onClick={handleClose} variant="ghost" size="lg" className="text-blue-900 dark:text-white hover:bg-blue-100/40 dark:hover:bg-white/10">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={startScanning}
+                  size="lg"
+                  className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 p-0 shadow-lg"
+                >
+                  <Camera className="w-8 h-8" />
+                </Button>
+              </div>
+              <p className="text-center text-blue-900 dark:text-white/80 text-sm mt-3">Tap to scan barcodes, QR codes, or product images</p>
+            </div>
+          )}
+
+          {/* Scanning controls */}
+          {scanningState === "scanning" && (
+            <div className="p-4 md:p-0">
+              <div className="flex justify-center">
+                <Button onClick={stopScanning} variant="outline" className="border-blue-600 text-blue-900 dark:text-white hover:bg-blue-100/40 dark:hover:bg-white/10">
+                  Stop Scanning
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
