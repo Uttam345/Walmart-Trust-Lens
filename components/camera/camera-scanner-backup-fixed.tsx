@@ -232,31 +232,39 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         }, 15000) // 15 second timeout to match the existing timeout
         
         // Start continuous scanning
-        const scannerPromise = codeReader.decodeFromVideoDevice(null, videoRef.current!, (result, error) => {
+        const scannerPromise = codeReader.decodeFromVideoDevice(null, videoRef.current!, async (result, error) => {
           if (result) {
             const code = result.getText()
             addDebugInfo(`✅ Barcode detected: ${code}`)
-            
+
             // Clear timeout and progress since we found a barcode
             if (scanTimeoutRef.current) {
               clearTimeout(scanTimeoutRef.current)
               scanTimeoutRef.current = null
             }
             clearInterval(progressInterval)
-            
-            // Find product by barcode
-            const product = findProductByBarcode(code)
-            
+
             setDetectedCode(code)
             setScanType("barcode")
             setScanningState("processing")
-            
+
+            // --- API lookup logic ---
+            let product: ProcessedProduct | null = null
+            try {
+              product = await lookupBarcode(code)
+            } catch (e) {
+              addDebugInfo(`Barcode API error: ${e instanceof Error ? e.message : String(e)}`)
+            }
+            if (!product) {
+              addDebugInfo("No product found in API, using mock fallback.")
+              product = generateMockProduct(code)
+            }
             setTimeout(() => {
               setDetectedProduct(product)
               setScanningState("success")
               setScanProgress(100)
             }, 1000)
-            
+
             // Stop the scanner after successful detection
             stopBarcodeScanner()
           } else if (error && error.name !== 'NotFoundException') {
