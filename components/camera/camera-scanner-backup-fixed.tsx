@@ -754,15 +754,21 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                   />
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 text-sm">{detectedProduct.name}</h4>
-                    <p
-                      className={`text-lg font-bold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}
-                    >
-                      {detectedProduct.price}
-                    </p>
+                    <p className={`text-lg font-bold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}>{detectedProduct.price}</p>
                     {scanType && (
                       <p className="text-xs text-gray-500 capitalize">
                         Detected via {scanType} {detectedCode && `(${detectedCode.slice(-6)})`}
                       </p>
+                    )}
+                    {/* Show extra product info if available */}
+                    {detectedProduct.category && (
+                      <p className="text-xs text-gray-700">Category: {detectedProduct.category}</p>
+                    )}
+                    {detectedProduct.brand && (
+                      <p className="text-xs text-gray-700">Brand: {detectedProduct.brand}</p>
+                    )}
+                    {detectedProduct.manufacturer && (
+                      <p className="text-xs text-gray-700">Manufacturer: {detectedProduct.manufacturer}</p>
                     )}
                     {detectedProduct.isUnknown && (
                       <p className="text-xs text-orange-600 font-medium">Product not in database</p>
