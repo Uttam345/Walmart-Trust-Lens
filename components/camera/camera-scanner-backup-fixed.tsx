@@ -17,6 +17,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
+import { lookupBarcode, generateMockProduct, type ProcessedProduct } from "@/lib/barcode-api"
 import {
   X,
   Camera,
@@ -33,7 +34,7 @@ import {
 interface CameraScannerProps {
   isOpen: boolean
   onClose: () => void
-  onScanComplete: (productData: any) => void
+  onScanComplete: (productData: ProcessedProduct) => void
 }
 
 export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScannerProps) {
@@ -44,7 +45,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
   const [scanningState, setScanningState] = useState<"idle" | "scanning" | "processing" | "success" | "not_found">(
     "idle",
   )
-  const [detectedProduct, setDetectedProduct] = useState<any>(null)
+  const [detectedProduct, setDetectedProduct] = useState<ProcessedProduct | null>(null)
   const [detectedCode, setDetectedCode] = useState<string | null>(null)
   const [scanType, setScanType] = useState<"barcode" | "qr" | "product" | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -465,8 +466,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     if (detectedProduct) {
       onScanComplete({
         ...detectedProduct,
-        scanMethod: scanType,
-        detectedCode: detectedCode,
+        detectedCode: detectedCode || undefined,
         scanTimestamp: new Date().toISOString(),
       })
       cleanupEverything()
@@ -777,7 +777,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                     <div
                       className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-blue-600"}`}
                     >
-                      {detectedProduct.socialProof.friendsRecommend}%
+                      {detectedProduct.socialProof?.friendsRecommend}%
                     </div>
                     <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-blue-700"}`}>
                       Friends recommend
@@ -789,7 +789,7 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
                     <div
                       className={`font-semibold ${detectedProduct.isUnknown ? "text-orange-600" : "text-green-600"}`}
                     >
-                      {detectedProduct.socialProof.locationPopularity}%
+                      {detectedProduct.socialProof?.locationPopularity}%
                     </div>
                     <div className={`${detectedProduct.isUnknown ? "text-orange-700" : "text-green-700"}`}>
                       Local popularity
