@@ -6,7 +6,7 @@ A Next.js application that combines **social proof engine** with **environmental
 
 ## 🌐 Live Demo
 
-**🚀 [View Live Application](https://v0-trust-lens-weld-redesign.vercel.app)**
+**🚀 [View Live Application](https://walmart-trust-lens.vercel.app)**
 
 Experience the full application with all features including camera scanning, AI assistant, and social proof engine.
 
@@ -98,7 +98,7 @@ Experience the full application with all features including camera scanning, AI 
 ## 🚀 Deployment
 
 The application is deployed on **Vercel** and accessible at:
-**[https://v0-trust-lens-weld-redesign.vercel.app](https://v0-trust-lens-weld-redesign.vercel.app)**
+**[https://walmart-trust-lens.vercel.app](https://walmart-trust-lens.vercel.app)**
 
 ### Deployment Features
 - **Automatic deployments** from main branch
