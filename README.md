@@ -1,110 +1,71 @@
 # 🛒 Walmart SmartScan Pro
 
-> **Revolutionizing retail through community-driven decisions and sustainable shopping**
+> **Revolutionizing retail through trusted social proof and sustainable shopping**
 
-A Next.js application that combines **social proof engine** with **environmental consciousness** to help customers make smarter, more sustainable purchasing decisions at Walmart.
+A cutting-edge Next.js application that transforms shopping decisions by combining **real social validation** from your trusted network with **gamified sustainability** to create the ultimate omnichannel Walmart experience.
 
 ## 🌐 Live Demo
 
 **🚀 [View Live Application](https://walmart-trust-lens.vercel.app)**
 
-Experience the full application with all features including camera scanning, AI assistant, and social proof engine.
+Experience authentic social proof scanning and sustainable shopping gamification in action.
 
-## 🌟 Features
+## 🌟 Core Features
 
-### 🔍 **Smart Scanner**
-- **Advanced Barcode/QR Code Scanning** - Optimized camera interface using ZXing library
-- **Real-time Product Recognition** - Instant product identification and details
-- **Mobile-First Design** - Optimized for phone scanning with responsive UI
+### � **Social Proof Scanner**
+**The future of trusted product validation**
 
-### 👥 **Social Proof Engine**
-- **Friend Network Integration** - See what your contacts have purchased
-- **Local Community Insights** - Discover popular products in your area
-- **Similar Shopper Matching** - AI-powered recommendations from users with similar shopping patterns
-- **Real-Time Activity** - Live purchasing trends and community discussions
-- **Verified Reviews** - Access to 50M+ authentic customer reviews
+- **Seamless Product Scanning** - Scan any product's QR code or barcode using your mobile device
+- **Trusted Social Validation** - Instantly see which friends from your contact list (anonymized for privacy) have purchased the same product or similar items in the category
+- **Community & Location Insights** - Access trending products and purchase patterns within your local community and peer group for hyper-relevant recommendations
+- **Omnichannel Experience** - Integrates both online and offline shopping data, bridging the gap for a unified Walmart experience whether shopping in-store or online
+- **Enhanced Privacy Protection** - Social proof generated using contact list data with all friend identities remaining anonymous
+- **Comprehensive Product Intelligence** - Detailed product information, authentic reviews, and live community discussions for confident purchase decisions
 
-### 🌱 **Sustainability Intelligence**
-- **Carbon Footprint Calculator** - Track environmental impact of purchases
-- **Eco-Score Rating System** - A+ to C sustainability grading for products
-- **Sustainable Alternatives** - AI-recommended eco-friendly substitutions
-- **Impact Tracking** - Personal and community environmental progress
-- **Green Achievements** - Gamified environmental goals
+### 🌱 **Sustainability - Greener Cart Gamification**
+**Solving Walmart's sustainability challenge through engagement**
 
-### 🤖 **AI Assistant**
-- **Personalized Shopping Assistant** - AI-powered product recommendations
-- **Smart Chat Interface** - Natural language product queries
-- **Shopping Optimization** - Intelligent suggestions for better purchases
+- **Greener Cart System** - Earn "green points" for adding sustainable products to your cart, turning eco-friendly shopping into a rewarding, gamified experience
+- **Eco-Score Display** - Every product shows clear sustainability ratings (carbon footprint, recyclability) for environmentally conscious choices at the point of decision
+- **Personal & Community Impact Tracking** - Visualize individual and collective environmental impact through progress dashboards and community achievements
+- **Corporate Influence Engine** - Drive demand for sustainable products, encouraging brands and suppliers to prioritize eco-friendly practices
+- **Engagement & Rewards** - Badges, leaderboards, and shareable achievements boost ongoing user engagement and foster accomplishment for sustainable actions
 
-### 📱 **Enhanced User Experience**
-- **Personalized Dashboard** - Customized experience based on shopping patterns
-- **User Classification System** - VIP, Frequent, Casual shopper profiles
-- **Onboarding Flow** - Guided setup for new users
-- **Recent Scans** - History of scanned products
-- **Progress Tracking** - Shopping stats and achievements
-
-### 🏆 **Gamification & Social**
-- **Achievement System** - Unlock badges for shopping milestones
-- **Leaderboards** - Community rankings for sustainable shopping
-- **Social Feed** - Share and discover products with the community
-- **Community Impact** - Track collective environmental savings
+### 🤖 **AI-Powered Assistant**
+- **Intelligent Shopping Companion** - AI-driven product recommendations and natural language queries
+- **Smart Decision Support** - Contextual suggestions based on social proof and sustainability data
 
 ## 🛠️ Tech Stack
 
-### **Frontend Framework**
-- **Next.js 15.2.4** - React framework with App Router
-- **React 18.3.1** - UI library
-- **TypeScript 5.6.3** - Type-safe development
+### **Core Framework**
+- **Next.js 15.2.4** - React framework with App Router for optimal performance
+- **React 18.3.1** - Modern UI library with hooks and concurrent features
+- **TypeScript 5.6.3** - Type-safe development for enterprise-grade reliability
 
-### **Styling & UI**
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **Radix UI Components** - Accessible component primitives
-  - Dialog, Dropdown, Navigation, Tabs, Toast, etc.
-- **Lucide React** - Beautiful icons
-- **Next Themes** - Dark/light mode support
-- **Tailwind Animate** - CSS animations
+### **Scanner & Camera Technology**
+- **@zxing/library** - Advanced barcode and QR code scanning engine
+- **Browser Camera API** - Direct camera access for seamless scanning experience
+- **Real-time Processing** - Optimized frame processing for mobile devices
 
-### **Scanner & Camera**
-- **@zxing/library** - Barcode and QR code scanning
-- **Browser Camera API** - Direct camera access
+### **AI & Intelligence**
+- **OpenRouter API** - Multi-model AI assistant with intelligent product recommendations
+- **Barcode Lookup API** - Real-time product data retrieval and validation
+- **Real-time Chat Interface** - Natural language product queries and support
 
-### **AI & Chat**
-- **OpenRouter API** - AI assistant functionality with multiple model support
-- **Real-time chat interface** - Intelligent product recommendations
+### **UI & Styling**
+- **Tailwind CSS 3.4.17** - Utility-first CSS framework for rapid development
+- **Radix UI Components** - Accessible, unstyled component primitives
+- **Lucide React** - Beautiful, consistent icon system
+- **Next Themes** - Seamless dark/light mode support
 
-### **Data Visualization**
-- **Recharts** - Charts and analytics
-- **Progress indicators** - Visual feedback components
+### **Data & Analytics**
+- **Recharts** - Interactive charts for sustainability tracking and social insights
+- **Progress Indicators** - Visual feedback for user engagement and achievements
 
-### **Forms & Validation**
-- **React Hook Form** - Form management
-- **Zod** - Schema validation
-- **@hookform/resolvers** - Form validation integration
-
-### **Development Tools**
-- **ESLint** - Code linting
-- **PostCSS** - CSS processing
-- **PNPM** - Package manager
-
-### **Additional Libraries**
-- **date-fns** - Date utilities
-- **clsx** - Conditional CSS classes
-- **cmdk** - Command palette
-- **class-variance-authority** - Component variants
-- **Embla Carousel** - Image carousels
-- **Sonner** - Toast notifications
-- **Vaul** - Mobile-first drawer component
-
-## 🚀 Deployment
-
-The application is deployed on **Vercel** and accessible at:
-**[https://walmart-trust-lens.vercel.app](https://walmart-trust-lens.vercel.app)**
-
-### Deployment Features
-- **Automatic deployments** from main branch
-- **Preview deployments** for pull requests  
-- **Edge runtime** for optimal performance
-- **Global CDN** for fast content delivery
+### **Mobile & Performance**
+- **PWA Ready** - Progressive Web App capabilities for native-like mobile experience
+- **Optimized Scanning** - Efficient barcode detection with minimal resource usage
+- **Responsive Design** - Mobile-first approach with cross-device compatibility
 
 ## 🚀 Getting Started
 
@@ -126,9 +87,10 @@ The application is deployed on **Vercel** and accessible at:
    ```
 
 3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
+   Create a `.env.local` file:
    ```env
    OPENROUTER_API_KEY=your_openrouter_api_key_here
+   NEXT_PUBLIC_BARCODE_API_KEY=your_barcode_api_key_here
    NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
@@ -149,71 +111,46 @@ pnpm start
 
 ## 📱 Key Pages & Routes
 
-- **`/`** - Home page with hero, features, and social proof showcase
-- **`/scanner`** - Main scanning interface with camera functionality
-- **`/assistant`** - AI-powered shopping assistant
-- **`/achievements`** - User achievements and progress tracking
-- **`/social`** - Community feed and social interactions
-- **`/sustainability`** - Environmental impact dashboard
+- **`/`** - Home page with social proof showcase and sustainability features
+- **`/scanner`** - Main scanning interface with camera functionality and social validation
+- **`/assistant`** - AI-powered shopping assistant with personalized recommendations
+- **`/achievements`** - Gamified sustainability progress and social achievements
+- **`/social`** - Community insights and trending products
+- **`/sustainability`** - Environmental impact dashboard and greener cart tracking
 
-## 🎯 Project Architecture
+## 🎯 Impact & Innovation
 
-### **App Structure**
-```
-app/
-├── globals.css           # Global styles
-├── layout.tsx           # Root layout
-├── page.tsx            # Home page
-├── achievements/       # Achievement system
-├── api/chat/          # AI chat API
-├── assistant/         # AI assistant page
-├── scanner/           # Scanner interface
-├── social/            # Social features
-└── sustainability/    # Environmental tracking
-```
+### **Social Trust Revolution**
+- **Authentic Reviews** - Move beyond anonymous reviews to trusted friend recommendations
+- **Privacy-First Approach** - Leverage social connections while maintaining complete anonymity
+- **Community-Driven Decisions** - Hyper-local and peer-relevant product insights
 
-### **Components Organization**
-```
-components/
-├── ui/                # Reusable UI components (Radix-based)
-├── camera/            # Camera and scanner components
-├── onboarding/        # User onboarding flow
-├── settings/          # User settings
-└── [feature-components] # Feature-specific components
-```
+### **Sustainability Leadership**
+- **Gamified Green Shopping** - Transform eco-conscious shopping into an engaging experience
+- **Supply Chain Influence** - Drive corporate sustainability through consumer demand
+- **Measurable Impact** - Track individual and community environmental contributions
+
+### **Omnichannel Excellence**
+- **Unified Experience** - Seamless integration between online and offline shopping
+- **Real-Time Intelligence** - Instant access to social proof and sustainability data
+- **Future-Ready Platform** - Scalable architecture for evolving retail needs
 
 ## 🌐 Browser Compatibility
 
-- ✅ **Modern browsers** with camera API support
-- ✅ **Mobile Safari and Chrome** - Optimized for mobile scanning
-- ✅ **Desktop browsers** with webcam access
-- ✅ **Progressive enhancement** for older browsers
+- ✅ **Modern Mobile Browsers** - Optimized for iOS Safari and Android Chrome
+- ✅ **Desktop Browsers** - Full feature support on all modern browsers
+- ✅ **Camera API Support** - Advanced scanning capabilities on supported devices
+- ✅ **Progressive Enhancement** - Graceful degradation for older browsers
 
 ## 🔒 Privacy & Security
 
-- **Local camera processing** - No video data sent to servers
-- **Secure API endpoints** - Protected AI assistant interactions
-- **Privacy-first design** - User data handled responsibly
-
-## 📊 Performance Features
-
-- **Optimized scanning frame** - 288x192px for better barcode detection
-- **Reduced DOM complexity** - Improved performance
-- **Mobile-first responsive design** - Smooth mobile experience
-- **Code splitting** - Efficient bundle loading
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is private and proprietary.
+- **Anonymous Social Proof** - Friend connections remain completely anonymous
+- **Local Processing** - Camera scanning processed locally, no video data transmitted
+- **Secure API Endpoints** - Protected AI assistant and product lookup interactions
+- **Privacy-First Design** - User data handled with enterprise-grade security
 
 ---
 
-**Built with ❤️ for better shopping experiences**
+**Together, these features make Walmart SmartScan Pro a leader in combining social trust and sustainability, delivering an omnichannel, future-ready shopping experience.**
+
+**Built with ❤️ for the future of retail**
