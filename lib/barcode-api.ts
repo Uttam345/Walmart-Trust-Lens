@@ -112,58 +112,67 @@ export interface ProcessedProduct {
 
 /**
  * Lookup product by barcode using Barcode Lookup API
+ * NOTE: This function should only be called from the server (API route or getServerSideProps).
+ * Barcode Lookup API does NOT support CORS for client-side requests.
  */
 export async function lookupBarcode(barcode: string): Promise<ProcessedProduct | null> {
+  if (!BARCODE_API_KEY) {
+    throw new Error('Barcode API key is missing. Set BARCODE_API_KEY in your environment.')
+  }
+  // Only run on server (Node.js), not in browser
+  if (typeof window !== 'undefined') {
+    throw new Error('lookupBarcode must be called from the server (API route or getServerSideProps).')
+  }
   try {
     console.log(`Looking up barcode: ${barcode}`);
-    
     // Validate barcode format (7, 8, 10, 11, 12, 13, or 14 digits)
-    if (!/^\d{7,14}$/.test(barcode)) {
+    if (!/^[0-9]{7,14}$/.test(barcode)) {
       console.warn(`Invalid barcode format: ${barcode}`);
       return null;
     }
-
     const url = `${BASE_URL}?barcode=${barcode}&formatted=y&key=${BARCODE_API_KEY}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
+    // Add a timeout to fetch (10s)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (response.status === 404) {
       console.log(`No product found for barcode: ${barcode}`);
       return null;
     }
-
     if (response.status === 403) {
       console.error('Invalid API key for Barcode Lookup API');
       throw new Error('Invalid API key');
     }
-
     if (response.status === 429) {
       console.error('Rate limit exceeded for Barcode Lookup API');
       throw new Error('Rate limit exceeded');
     }
-
     if (!response.ok) {
       console.error(`API request failed with status: ${response.status}`);
       throw new Error(`API request failed: ${response.status}`);
     }
-
     const data: BarcodeApiResponse = await response.json();
-    
     if (!data.products || data.products.length === 0) {
       console.log(`No products found in API response for barcode: ${barcode}`);
       return null;
     }
-
     const product = data.products[0];
     console.log(`Found product: ${product.title}`);
-    
     return processProduct(product);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error('Barcode API request timed out');
+      throw new Error('Barcode API request timed out');
+    }
     console.error('Error looking up barcode:', error);
     throw error;
   }
