@@ -123,11 +123,17 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
             setScanType("barcode")
             setScanningState("processing")
 
-            // --- API lookup logic ---
+            // --- API lookup logic (client-side fetch) ---
             let product: ProcessedProduct | null = null
             try {
-              product = await lookupBarcode(code)
-              addDebugInfo(`API returned: ${JSON.stringify(product)}`)
+              const res = await fetch(`/api/barcode-lookup?barcode=${encodeURIComponent(code)}`)
+              if (res.ok) {
+                product = await res.json()
+                addDebugInfo(`Camera API returned: ${JSON.stringify(product)}`)
+              } else {
+                const data = await res.json().catch(() => ({}))
+                addDebugInfo(`Barcode API error: ${data.error || 'No product found for this barcode.'}`)
+              }
             } catch (e) {
               addDebugInfo(`Barcode API error: ${e instanceof Error ? e.message : String(e)}`)
             }
