@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Send, Bot, User, Loader2, AlertCircle, Copy, ThumbsUp, ThumbsDown, RotateCcw, Sparkles, ShoppingCart, Package, Menu, Settings, Share2, Trash2 } from "lucide-react"
+import { Send, Bot, User, Loader2, AlertCircle, Copy, ThumbsUp, ThumbsDown, RotateCcw, Sparkles, ShoppingCart, Package, Menu, Settings, Share2, Trash2, TreePine } from "lucide-react"
 
 interface Message {
   type: "user" | "bot"
@@ -21,7 +21,14 @@ interface ChatContext {
 }
 
 export function AIChat({ context }: { context?: ChatContext }) {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      type: 'bot',
+      content: "👋 Welcome to Walmart SmartScan Pro! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions. What are you looking for today?",
+      timestamp: new Date()
+    }
+  ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -59,7 +66,14 @@ export function AIChat({ context }: { context?: ChatContext }) {
   }
 
   const clearChat = () => {
-    setMessages([])
+    setMessages([
+      {
+        id: 'welcome',
+        type: 'bot',
+        content: "👋 Welcome to Walmart SmartScan Pro! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions. What are you looking for today?",
+        timestamp: new Date()
+      }
+    ])
     toast({
       title: "Chat cleared",
       description: "All messages have been deleted",
@@ -170,6 +184,14 @@ export function AIChat({ context }: { context?: ChatContext }) {
           timestamp: new Date(),
         }
         setMessages(prev => [...prev, botMessage])
+        
+        // Show a subtle indicator if this was a fallback response
+        if (data.fallback) {
+          toast({
+            title: "Using fallback mode",
+            description: "AI services are limited, but I can still help with basic shopping questions!",
+          })
+        }
       } else {
         // Error handling
         const errorMessage: Message = {
@@ -402,8 +424,8 @@ export function AIChat({ context }: { context?: ChatContext }) {
       {/* Input Area */}
       <div className="border-t border-gray-200 bg-white p-4">
         <div className="max-w-4xl mx-auto">
-          {/* Quick Actions - Mobile optimized */}
-          {!isLoading && messages.length === 0 && (
+          {/* Quick Actions - Show for welcome message */}
+          {!isLoading && messages.length <= 1 && (
             <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
               <Button 
                 variant="outline" 
@@ -421,15 +443,25 @@ export function AIChat({ context }: { context?: ChatContext }) {
                 onClick={() => setInput("Compare iPhone vs Samsung Galaxy")}
               >
                 <ShoppingCart className="w-3 h-3 mr-1" />
-                Compare
+                Compare Products
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="text-xs whitespace-nowrap h-8 px-3"
-                onClick={() => setInput("Show me eco-friendly household products")}
+                onClick={() => setInput("I need a laptop under $500")}
               >
-                🌱 Eco Products
+                <Sparkles className="w-3 h-3 mr-1" />
+                Find Budget Options
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs whitespace-nowrap h-8 px-3"
+                onClick={() => setInput("Help me find sustainable products")}
+              >
+                <TreePine className="w-3 h-3 mr-1" />
+                Eco-Friendly
               </Button>
             </div>
           )}

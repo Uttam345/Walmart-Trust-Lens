@@ -11,9 +11,52 @@ const openai = new OpenAI({
   },
 })
 
+// Fallback responses for common shopping queries
+const fallbackResponses = {
+  greeting: [
+    "Hello! I'm your Walmart shopping assistant. I can help you find products, compare prices, and make smart shopping decisions. What are you looking for today?",
+    "Hi there! I'm here to help you with your shopping needs. Whether you're looking for specific products or need recommendations, just let me know!",
+    "Welcome! I can assist you with finding products, checking prices, and getting shopping advice. How can I help you today?"
+  ],
+  help: [
+    "I can help you with:\n• Finding and comparing products\n• Getting price information\n• Product recommendations\n• Reading reviews and ratings\n• Finding deals and discounts\n• Sustainable shopping options\n\nWhat would you like to know?",
+    "Here's what I can do for you:\n• Search for specific products\n• Compare different brands and prices\n• Suggest alternatives based on your budget\n• Help you find the best deals\n• Provide product information and reviews\n\nJust tell me what you're shopping for!"
+  ],
+  products: [
+    "I'd be happy to help you find products! Could you tell me more specifically what you're looking for? For example: electronics, clothing, groceries, home goods, etc.?",
+    "What type of product are you interested in? I can help you find the best options based on your needs and budget.",
+    "Let me help you find what you need! Please describe the product you're looking for, and I'll provide recommendations and information."
+  ]
+}
+
+function getFallbackResponse(userMessage: string): string {
+  const message = userMessage.toLowerCase()
+  
+  // Greetings
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening)/.test(message)) {
+    return fallbackResponses.greeting[Math.floor(Math.random() * fallbackResponses.greeting.length)]
+  }
+  
+  // Help requests
+  if (/help|what can you do|how can you help|capabilities/.test(message)) {
+    return fallbackResponses.help[Math.floor(Math.random() * fallbackResponses.help.length)]
+  }
+  
+  // Product searches
+  if (/looking for|need|want|find|search|buy|purchase|shopping/.test(message)) {
+    return fallbackResponses.products[Math.floor(Math.random() * fallbackResponses.products.length)]
+  }
+  
+  // Default response
+  return "I'm currently experiencing some technical difficulties with my advanced features, but I'm still here to help! Could you tell me more about what you're shopping for? I can provide basic assistance with product searches and shopping advice."
+}
+
 export async function POST(request: NextRequest) {
+  let requestMessages: any[] = []
+  
   try {
     const { messages, context } = await request.json()
+    requestMessages = messages || []
 
     // System prompt for Walmart shopping assistant
     const systemPrompt = `You are an AI shopping assistant for Walmart SmartScan Pro, a smart shopping app that helps users make informed purchasing decisions.
@@ -46,13 +89,13 @@ Respond in a conversational, helpful manner as a knowledgeable shopping assistan
       model: 'anthropic/claude-3.5-sonnet', // Using Claude 3.5 Sonnet for high-quality responses
       messages: [
         { role: 'system', content: systemPrompt },
-        ...messages.map((msg: any) => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content,
+        ...requestMessages.map((msg: any) => ({
+          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+          content: String(msg.content),
         })),
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 500, // Reduced from 1000 to prevent credit issues
       stream: false,
     })
 
@@ -67,14 +110,19 @@ Respond in a conversational, helpful manner as a knowledgeable shopping assistan
   } catch (error) {
     console.error('OpenRouter API Error:', error)
     
-    // Fallback response
-    const fallbackResponse = "I'm sorry, I'm having trouble connecting to my AI services right now. However, I'm here to help you with your shopping needs! Could you tell me what specific product or category you're looking for?"
-
+    // Get the last user message for fallback response
+    const lastUserMessage = requestMessages?.filter((m: any) => m.type === 'user')?.pop()
+    const userMessageContent = lastUserMessage?.content || ''
+    
+    // Use intelligent fallback based on user message
+    const fallbackResponse = getFallbackResponse(userMessageContent)
+    
     return NextResponse.json({
-      success: false,
+      success: true, // Still return success to show fallback message normally
       message: fallbackResponse,
+      fallback: true,
       error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 })
+    })
   }
 }
 

@@ -67,86 +67,7 @@ interface EcoScanResult {
   tips: string[]
 }
 
-const mockWasteDatabase: Record<string, WasteItem> = {
-  "battery": {
-    id: "battery",
-    name: "Battery",
-    type: "Lithium Ion Battery",
-    category: "hazardous",
-    disposalMethod: "Special collection at electronics stores or hazardous waste facilities",
-    environmentalImpact: "Contains toxic materials that can contaminate soil and water if disposed improperly",
-    nearbyLocations: ["Best Buy - Electronics Recycling", "Home Depot - Battery Collection", "City Hazardous Waste Center"],
-    tips: ["Never throw batteries in regular trash", "Remove batteries from devices before disposal", "Store used batteries in a cool, dry place until disposal"]
-  },
-  "clothing": {
-    id: "clothing",
-    name: "Old Clothing",
-    type: "Textile Waste",
-    category: "recyclable",
-    disposalMethod: "Donate to charity, textile recycling, or upcycle",
-    environmentalImpact: "Textile waste contributes to landfill overflow. Donating extends product lifecycle",
-    nearbyLocations: ["Goodwill Donation Center", "H&M Textile Recycling", "Local Community Center"],
-    tips: ["Wash items before donating", "Consider upcycling torn items", "Separate by material type for better recycling"]
-  },
-  "phone": {
-    id: "phone",
-    name: "Smartphone",
-    type: "Electronic Waste",
-    category: "hazardous",
-    disposalMethod: "Manufacturer take-back programs or certified e-waste recyclers",
-    environmentalImpact: "Contains rare earth metals and toxic materials requiring specialized processing",
-    nearbyLocations: ["Apple Store - Trade-in Program", "Staples - Tech Recycling", "Certified E-Waste Facility"],
-    tips: ["Backup and wipe all personal data", "Remove SIM and memory cards", "Check manufacturer trade-in value"]
-  },
-  "food_waste": {
-    id: "food_waste",
-    name: "Food Scraps",
-    type: "Organic Waste",
-    category: "compostable",
-    disposalMethod: "Home composting or municipal organic waste collection",
-    environmentalImpact: "Produces methane in landfills. Composting creates valuable soil amendment",
-    nearbyLocations: ["City Composting Program", "Community Garden Compost", "Local Farm Compost Drop-off"],
-    tips: ["Separate vegetable scraps from meat/dairy", "Start a home compost bin", "Reduce food waste through meal planning"]
-  }
-}
-
-const mockDropOffLocations: DropOffLocation[] = [
-  {
-    id: "1",
-    name: "Best Buy Electronics Recycling",
-    address: "123 Tech Ave, Downtown",
-    distance: "0.8 miles",
-    acceptedWaste: ["Electronics", "Batteries", "Cables"],
-    hours: "Mon-Sat 10AM-8PM, Sun 11AM-6PM",
-    phone: "(555) 123-4567"
-  },
-  {
-    id: "2",
-    name: "City Recycling Center",
-    address: "456 Green St, Midtown",
-    distance: "1.2 miles",
-    acceptedWaste: ["General Recycling", "Cardboard", "Glass", "Metal"],
-    hours: "Mon-Fri 8AM-5PM, Sat 9AM-3PM"
-  },
-  {
-    id: "3",
-    name: "Goodwill Donation Center",
-    address: "789 Charity Ln, Westside",
-    distance: "1.5 miles",
-    acceptedWaste: ["Clothing", "Furniture", "Household Items"],
-    hours: "Daily 9AM-7PM",
-    phone: "(555) 987-6543"
-  },
-  {
-    id: "4",
-    name: "Municipal Hazardous Waste Facility",
-    address: "321 Safe Disposal Rd, Industrial Zone",
-    distance: "3.2 miles",
-    acceptedWaste: ["Batteries", "Paint", "Chemicals", "Electronics"],
-    hours: "Sat 8AM-2PM (Appointment Required)",
-    phone: "(555) 456-7890"
-  }
-]
+// Real data will come from AI analysis and location services
 
 export function EcoScanner() {
   const [selectedWaste, setSelectedWaste] = useState<WasteItem | null>(null)
@@ -157,24 +78,123 @@ export function EcoScanner() {
   const [nearbyLocations, setNearbyLocations] = useState<DropOffLocation[]>([])
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
+  const [analysisDetails, setAnalysisDetails] = useState<{
+    processingTime?: number
+    imageQuality?: string
+    aiModel?: string
+  } | null>(null)
+  const [userStats, setUserStats] = useState({
+    itemsScanned: 0,
+    accurateAnalyses: 0,
+    facilitiesFound: 0,
+    totalProcessingTime: 0
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Update user stats when analysis is complete
+  const updateUserStats = (confidence: number, processingTime: number, locationsFound: number) => {
+    setUserStats(prev => ({
+      itemsScanned: prev.itemsScanned + 1,
+      accurateAnalyses: confidence > 0.8 ? prev.accurateAnalyses + 1 : prev.accurateAnalyses,
+      facilitiesFound: prev.facilitiesFound + locationsFound,
+      totalProcessingTime: prev.totalProcessingTime + processingTime
+    }))
+  }
+
+  const resizeImage = (file: File, maxWidth: number = 1024, maxHeight: number = 1024, quality: number = 0.9): Promise<{ blob: Blob; dataUrl: string }> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      const img = new Image()
+      
+      img.onload = () => {
+        // Calculate new dimensions maintaining aspect ratio
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const dataUrl = canvas.toDataURL('image/jpeg', quality)
+            resolve({ blob, dataUrl })
+          }
+        }, 'image/jpeg', quality)
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
+  }
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+      // Validate file size (max 10MB)
+      const maxSizeInMB = 10
+      const maxSizeInBytes = maxSizeInMB * 1024 * 1024
       
-      // Analyze with AI
-      await analyzeWasteWithAI(file)
+      if (file.size > maxSizeInBytes) {
+        alert(`Image size must be less than ${maxSizeInMB}MB. Please choose a smaller image.`)
+        return
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a JPEG, PNG, or WebP image file.')
+        return
+      }
+
+      try {
+        // Resize image for better display and AI processing
+        const { blob, dataUrl } = await resizeImage(file, 1024, 1024, 0.85)
+        setUploadedImage(dataUrl)
+        
+        // Convert blob to file for AI analysis
+        const optimizedFile = new File([blob], file.name, { type: 'image/jpeg' })
+        
+        // Clear previous analysis
+        setAnalysisDetails(null)
+        setSelectedWaste(null)
+        
+        // Analyze with AI using optimized image
+        await analyzeWasteWithAI(optimizedFile)
+      } catch (error) {
+        console.error('Error processing image:', error)
+        // Fallback to original file
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setUploadedImage(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+        
+        // Clear previous analysis
+        setAnalysisDetails(null)
+        setSelectedWaste(null)
+        
+        await analyzeWasteWithAI(file)
+      }
     }
   }
 
   const analyzeWasteWithAI = async (file: File) => {
     setIsAnalyzing(true)
+    const startTime = Date.now()
     
     try {
       // Get user location for nearby places
@@ -210,9 +230,17 @@ export function EcoScanner() {
       }
 
       const data = await response.json()
+      const processingTime = Date.now() - startTime
       
       if (data.success) {
         const result: EcoScanResult = data.result
+        
+        // Set analysis details for display
+        setAnalysisDetails({
+          processingTime,
+          imageQuality: data.imageProcessed?.optimized ? 'Optimized' : 'Original',
+          aiModel: 'Claude 3.5 Sonnet'
+        })
         
         // Convert AI result to WasteItem format
         const wasteItem: WasteItem = {
@@ -234,6 +262,13 @@ export function EcoScanner() {
         
         setSelectedWaste(wasteItem)
         
+        // Update user statistics
+        updateUserStats(
+          result.confidence,
+          processingTime,
+          data.nearbyLocations?.length || 0
+        )
+        
         if (data.nearbyLocations && data.nearbyLocations.length > 0) {
           setNearbyLocations(data.nearbyLocations)
         }
@@ -242,7 +277,12 @@ export function EcoScanner() {
       }
     } catch (error) {
       console.error('AI Analysis Error:', error)
-      // Fallback to manual analysis
+      // Enhanced fallback to manual analysis
+      setAnalysisDetails({
+        processingTime: Date.now() - startTime,
+        imageQuality: 'Processing Failed',
+        aiModel: 'Fallback Analysis'
+      })
       analyzeWaste(file.name)
     } finally {
       setIsAnalyzing(false)
@@ -252,30 +292,34 @@ export function EcoScanner() {
   const analyzeWaste = (input: string) => {
     setIsAnalyzing(true)
     
-    // Simulate AI analysis
+    // Create a generic analysis for text input when AI fails
     setTimeout(() => {
-      const wasteKey = Object.keys(mockWasteDatabase).find(key => 
-        input.toLowerCase().includes(key) || 
-        mockWasteDatabase[key].name.toLowerCase().includes(input.toLowerCase())
-      )
-      
-      if (wasteKey) {
-        setSelectedWaste(mockWasteDatabase[wasteKey])
-      } else {
-        // Default to general waste if not found
-        setSelectedWaste({
-          id: "unknown",
-          name: input || "Unknown Item",
-          type: "General Waste",
-          category: "general",
-          disposalMethod: "Check local waste management guidelines or contact waste management services",
-          environmentalImpact: "Proper disposal helps reduce environmental impact",
-          nearbyLocations: ["Local Waste Management Center", "Municipal Dump"],
-          tips: ["Contact local waste management for guidance", "Consider if item can be reused or donated"]
-        })
+      const genericWasteItem: WasteItem = {
+        id: "text_analysis",
+        name: input || "Unknown Item",
+        type: "Text-based analysis - Please upload an image for detailed AI analysis",
+        category: "general",
+        condition: "fair",
+        confidence: 0.3,
+        disposalMethod: "For accurate disposal guidance, please upload a clear photo of the item. General advice: Check local waste management guidelines or contact waste management services for proper disposal methods.",
+        environmentalImpact: "Every item properly disposed of helps reduce environmental impact. Consider repair, reuse, or donation before disposal.",
+        nearbyLocations: [],
+        tips: [
+          "Take a clear photo for AI analysis to get specific guidance",
+          "Contact local waste management for text-based queries",
+          "Consider if item can be cleaned, repaired, or repurposed",
+          "Check manufacturer websites for disposal programs"
+        ],
+        recommendations: [
+          "Upload a photo for detailed AI analysis",
+          "Ensure good lighting when taking photos",
+          "Include any visible labels or markings in photos"
+        ]
       }
+      
+      setSelectedWaste(genericWasteItem)
       setIsAnalyzing(false)
-    }, 2000)
+    }, 1500)
   }
 
   const handleManualInput = () => {
@@ -330,7 +374,7 @@ export function EcoScanner() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               Eco Scanner
             </h1>
-            <p className="text-gray-600">AI-powered waste analysis & disposal guidance</p>
+            <p className="text-gray-600">Real-time AI analysis for proper waste disposal and environmental impact</p>
           </div>
         </div>
       </div>
@@ -358,28 +402,56 @@ export function EcoScanner() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  capture="environment"
                   onChange={handleImageUpload}
                   className="hidden"
                 />
                 {uploadedImage ? (
                   <div className="space-y-3">
-                    <img 
-                      src={uploadedImage} 
-                      alt="Uploaded item" 
-                      className="w-32 h-32 object-cover rounded-lg mx-auto border-2 border-green-200"
-                    />
-                    <Button 
-                      onClick={() => {
-                        setUploadedImage(null)
-                        setSelectedWaste(null)
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="border-green-300 text-green-700 hover:bg-green-50"
-                    >
-                      Upload Different Image
-                    </Button>
+                    <div className="relative w-full max-w-md mx-auto">
+                      <img 
+                        src={uploadedImage} 
+                        alt="Uploaded item" 
+                        className="w-full h-auto max-h-64 object-contain rounded-lg border-2 border-green-200 shadow-sm bg-white"
+                        style={{ minHeight: '128px' }}
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="secondary" className="text-xs bg-white/90 backdrop-blur-sm">
+                          High Quality
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <Button 
+                        onClick={() => {
+                          setUploadedImage(null)
+                          setSelectedWaste(null)
+                          setAnalysisDetails(null)
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                      >
+                        Upload Different Image
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          if (uploadedImage) {
+                            const link = document.createElement('a')
+                            link.href = uploadedImage
+                            link.download = 'eco-scan-image.jpg'
+                            link.click()
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Upload className="w-3 h-3 mr-1" />
+                        Download
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -389,6 +461,12 @@ export function EcoScanner() {
                     <div>
                       <p className="font-medium text-gray-700 mb-1">Take or upload a photo</p>
                       <p className="text-sm text-gray-500 mb-3">Get instant AI analysis of your item</p>
+                      <div className="text-xs text-gray-400 mb-3 space-y-1">
+                        <div>💡 Tips for best results:</div>
+                        <div>• Good lighting and clear focus</div>
+                        <div>• Fill the frame with your item</div>
+                        <div>• Max 10MB, JPEG/PNG/WebP</div>
+                      </div>
                     </div>
                     <Button 
                       onClick={() => fileInputRef.current?.click()}
@@ -438,30 +516,27 @@ export function EcoScanner() {
             </div>
           </div>
 
-          {/* Quick Action Categories */}
+          {/* Quick Tips Section */}
           <div className="space-y-3">
             <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Recycle className="w-5 h-5 text-purple-600" />
-              Common Items
+              <Info className="w-5 h-5 text-blue-600" />
+              Scanning Tips
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(mockWasteDatabase).map(([key, item]) => (
-                <Button
-                  key={key}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedWaste(item)}
-                  className="h-auto p-3 flex flex-col items-center gap-2 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    {key === "battery" && <Battery className="w-4 h-4 text-yellow-600" />}
-                    {key === "clothing" && <Shirt className="w-4 h-4 text-blue-600" />}
-                    {key === "phone" && <Smartphone className="w-4 h-4 text-gray-600" />}
-                    {key === "food_waste" && <TreePine className="w-4 h-4 text-green-600" />}
-                  </div>
-                  <span className="text-xs font-medium text-center">{item.name}</span>
-                </Button>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Camera className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-800">Photo Quality</span>
+                </div>
+                <p className="text-sm text-blue-700">Good lighting and clear focus for best AI analysis</p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Smartphone className="w-4 h-4 text-green-600" />
+                  <span className="font-medium text-green-800">Item Details</span>
+                </div>
+                <p className="text-sm text-green-700">Include labels, markings, and any damage in frame</p>
+              </div>
             </div>
           </div>
 
@@ -476,10 +551,16 @@ export function EcoScanner() {
                 <div className="text-left">
                   <div className="text-lg font-semibold text-green-800">Analyzing with AI...</div>
                   <div className="text-sm text-green-600">Claude 3.5 Sonnet is examining your item</div>
+                  {uploadedImage && (
+                    <div className="text-xs text-green-500 mt-1">High-quality image processing</div>
+                  )}
                 </div>
               </div>
               <div className="mt-4 w-full bg-green-200 rounded-full h-2">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full animate-pulse" style={{width: '75%'}}></div>
+              </div>
+              <div className="mt-3 text-xs text-green-600">
+                🔍 Analyzing condition • 🏷️ Categorizing disposal • 🌍 Calculating impact
               </div>
             </div>
           )}
@@ -537,8 +618,35 @@ export function EcoScanner() {
                         {Math.round(selectedWaste.confidence * 100)}% confident
                       </Badge>
                     )}
+                    {analysisDetails && (
+                      <Badge variant="outline" className="text-sm px-3 py-1 border-purple-300 text-purple-700">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {analysisDetails.processingTime}ms
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">{selectedWaste.type}</p>
+                  
+                  {/* Analysis Details */}
+                  {analysisDetails && (
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <Smartphone className="w-3 h-3" />
+                        {analysisDetails.aiModel}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Upload className="w-3 h-3" />
+                        {analysisDetails.imageQuality}
+                      </span>
+                      {selectedWaste.confidence && selectedWaste.confidence > 0.8 && (
+                        <span className="flex items-center gap-1 text-green-600">
+                          <CheckCircle className="w-3 h-3" />
+                          High Accuracy
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className="text-gray-600 text-sm leading-relaxed mt-3">{selectedWaste.type}</p>
                 </div>
               </div>
             </div>
@@ -608,8 +716,10 @@ export function EcoScanner() {
                     size="lg"
                     className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 shadow-lg flex-1 min-w-fit"
                     onClick={() => {
+                      // Nearby locations will come from AI API response or location services
                       if (nearbyLocations.length === 0) {
-                        setNearbyLocations(mockDropOffLocations)
+                        // If no real locations found, show informational message
+                        console.log('No nearby locations available. Enable location services for better results.')
                       }
                     }}
                   >
@@ -712,8 +822,19 @@ export function EcoScanner() {
                         <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                           <MapPin className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-700 mb-2">No locations found</h3>
-                        <p className="text-gray-500 text-sm">Try enabling location services or contact local waste management.</p>
+                        <h3 className="text-lg font-medium text-gray-700 mb-2">No nearby locations found</h3>
+                        <p className="text-gray-500 text-sm mb-4">
+                          Location services are not yet integrated. You can manually search for:
+                        </p>
+                        <div className="text-left max-w-md mx-auto">
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <div>• Local recycling centers</div>
+                            <div>• Municipal waste facilities</div>
+                            <div>• Donation centers (Goodwill, Salvation Army)</div>
+                            <div>• Electronics recycling (Best Buy, Staples)</div>
+                            <div>• Hazardous waste collection sites</div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -727,18 +848,38 @@ export function EcoScanner() {
                   setSelectedWaste(null)
                   setUploadedImage(null)
                   setWasteInput("")
+                  setAnalysisDetails(null)
                 }}
                 className="border-gray-300 hover:bg-gray-50"
               >
                 <Camera className="w-5 h-5 mr-2" />
                 Scan Another Item
               </Button>
+              
+              {/* Reset Stats Button (for development/testing) */}
+              {process.env.NODE_ENV === 'development' && (
+                <Button 
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setUserStats({
+                      itemsScanned: 0,
+                      accurateAnalyses: 0,
+                      facilitiesFound: 0,
+                      totalProcessingTime: 0
+                    })
+                  }}
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Reset Stats (Dev)
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Impact Statistics */}
+      {/* Real-time Impact Statistics */}
       <Card className="bg-gradient-to-br from-slate-50 to-gray-100 border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -747,7 +888,7 @@ export function EcoScanner() {
             </div>
             Your Environmental Impact
           </CardTitle>
-          <p className="text-gray-600">Track your contribution to a sustainable future</p>
+          <p className="text-gray-600">Real-time tracking of your contribution to sustainability</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -755,41 +896,63 @@ export function EcoScanner() {
               <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Recycle className="w-6 h-6 text-green-600" />
               </div>
-              <div className="text-2xl font-bold text-green-600 mb-1">23</div>
-              <div className="text-sm text-gray-600">Items Recycled</div>
+              <div className="text-2xl font-bold text-green-600 mb-1">{userStats.itemsScanned}</div>
+              <div className="text-sm text-gray-600">Items Scanned</div>
             </div>
             <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-blue-100">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-sky-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <TreePine className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="text-2xl font-bold text-blue-600 mb-1">45kg</div>
-              <div className="text-sm text-gray-600">CO₂ Saved</div>
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {userStats.itemsScanned > 0 ? `${(userStats.itemsScanned * 2.3).toFixed(1)}kg` : '0kg'}
+              </div>
+              <div className="text-sm text-gray-600">CO₂ Impact</div>
             </div>
             <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-purple-100">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-violet-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <MapPin className="w-6 h-6 text-purple-600" />
               </div>
-              <div className="text-2xl font-bold text-purple-600 mb-1">12</div>
-              <div className="text-sm text-gray-600">Locations Visited</div>
+              <div className="text-2xl font-bold text-purple-600 mb-1">{userStats.facilitiesFound}</div>
+              <div className="text-sm text-gray-600">Facilities Found</div>
             </div>
             <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-orange-100">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-6 h-6 text-orange-600" />
               </div>
-              <div className="text-2xl font-bold text-orange-600 mb-1">89%</div>
-              <div className="text-sm text-gray-600">Proper Disposal Rate</div>
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {userStats.itemsScanned > 0 ? `${Math.round((userStats.accurateAnalyses / userStats.itemsScanned) * 100)}%` : '-'}
+              </div>
+              <div className="text-sm text-gray-600">Analysis Accuracy</div>
             </div>
           </div>
           
-          {/* Achievement Progress */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+          {/* Dynamic Progress Section */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-green-800">Next Achievement: Eco Warrior</span>
-              <span className="text-xs text-green-600">7 more items</span>
+              <span className="text-sm font-medium text-blue-800">
+                {userStats.itemsScanned === 0 
+                  ? "Start scanning to track your environmental impact!" 
+                  : `Scanning Progress: ${userStats.itemsScanned} items analyzed`}
+              </span>
+              {userStats.itemsScanned > 0 && (
+                <span className="text-xs text-blue-600">
+                  Avg: {Math.round(userStats.totalProcessingTime / userStats.itemsScanned)}ms
+                </span>
+              )}
             </div>
-            <div className="w-full bg-green-200 rounded-full h-2">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full" style={{width: '76%'}}></div>
+            <div className="w-full bg-blue-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500" 
+                style={{width: `${Math.min((userStats.itemsScanned / 10) * 100, 100)}%`}}
+              ></div>
             </div>
+            {userStats.itemsScanned >= 10 && (
+              <div className="text-center mt-2">
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+                  🏆 Eco Warrior Achieved!
+                </Badge>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
