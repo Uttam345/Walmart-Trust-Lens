@@ -6,10 +6,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, Upload, Search, Star, TrendingUp, Users, MapPin, Heart, Zap, FileImage, CheckCircle, AlertCircle } from "lucide-react"
+import { Camera, Upload, Search, Star, TrendingUp, Users, MapPin, Heart, Zap, FileImage, CheckCircle, AlertCircle, Sparkles } from "lucide-react"
 import { CameraScanner } from "./camera/camera-scanner-backup-fixed"
+import { useToast } from "@/hooks/use-toast"
 
 function ScannerContent() {
+  const { toast } = useToast()
   const [isScanning, setIsScanning] = useState(false)
   const [isProcessingImage, setIsProcessingImage] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -41,6 +43,21 @@ function ScannerContent() {
     image: string
     socialProof: SocialProof
     friends: Friend[]
+    aiData?: {
+      description: string
+      category: string
+      features: string[]
+      benefits: string[]
+      usage: string
+      whereToFind: string[]
+      alternatives: Array<{
+        name: string
+        price: string
+        reason: string
+      }>
+      buyingTips: string[]
+      confidence: number
+    }
   }
 
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null)
@@ -52,6 +69,9 @@ function ScannerContent() {
   // Local storage functions
   const saveImageToStorage = (imageData: string, productData: Product) => {
     try {
+      // Check if we're in the browser
+      if (typeof window === 'undefined') return
+      
       const savedImages = JSON.parse(localStorage.getItem('scanned-images') || '[]')
       const newScan = {
         id: Date.now().toString(),
@@ -68,6 +88,8 @@ function ScannerContent() {
 
   const getSavedImages = () => {
     try {
+      // Check if we're in the browser
+      if (typeof window === 'undefined') return []
       return JSON.parse(localStorage.getItem('scanned-images') || '[]')
     } catch (error) {
       console.error('Failed to get saved images:', error)
@@ -140,52 +162,156 @@ function ScannerContent() {
 
   const processUploadedImage = async (imageData: string) => {
     setIsProcessingImage(true)
-    setProcessingStep("Analyzing image...")
+    setProcessingStep("Initializing AI analysis...")
 
-    // Simulate AI image processing steps
-    const steps = [
-      { text: "Analyzing image quality...", duration: 800 },
-      { text: "Detecting products...", duration: 1200 },
-      { text: "Identifying barcode/text...", duration: 1000 },
-      { text: "Matching with database...", duration: 1500 },
-      { text: "Gathering social proof...", duration: 1000 },
-      { text: "Finalizing results...", duration: 500 }
-    ]
+    try {
+      // Convert base64 to blob for form data
+      const response = await fetch(imageData)
+      const blob = await response.blob()
+      
+      // Create form data
+      const formData = new FormData()
+      formData.append('image', blob, 'uploaded-image.jpg')
 
-    for (let i = 0; i < steps.length; i++) {
-      setProcessingStep(steps[i].text)
-      await new Promise(resolve => setTimeout(resolve, steps[i].duration))
+      // Update processing step
+      setProcessingStep("Analyzing product with AI...")
+
+      // Call the OpenRouter AI API
+      const apiResponse = await fetch('/api/product-scan', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!apiResponse.ok) {
+        throw new Error(`API request failed: ${apiResponse.status}`)
+      }
+
+      const result = await apiResponse.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to analyze image')
+      }
+
+      setProcessingStep("Processing AI insights...")
+
+      // Convert AI response to Product format
+      const aiProduct: Product = {
+        id: result.data.id,
+        name: result.data.productName,
+        price: result.data.estimatedPrice,
+        rating: result.data.rating,
+        reviews: result.data.reviews,
+        image: result.data.image,
+        socialProof: result.data.socialProof,
+        friends: result.data.friends,
+        // Store additional AI data for enhanced display
+        aiData: {
+          description: result.data.description,
+          category: result.data.category,
+          features: result.data.features,
+          benefits: result.data.benefits,
+          usage: result.data.usage,
+          whereToFind: result.data.whereToFind,
+          alternatives: result.data.alternatives,
+          buyingTips: result.data.buyingTips,
+          confidence: result.data.confidence
+        }
+      }
+
+      // Check if this was a fallback response
+      if (result.data.aiError) {
+        setProcessingStep("AI analysis unavailable - showing basic info...")
+        toast({
+          title: "Using fallback mode",
+          description: "AI analysis is temporarily unavailable. Basic product information provided.",
+          variant: "default",
+        })
+        setTimeout(() => {
+          setProcessingStep("Finalizing results...")
+        }, 1500)
+      } else {
+        setProcessingStep("Finalizing results...")
+      }
+      
+      // Save to local storage
+      saveImageToStorage(imageData, aiProduct)
+
+      setScannedProduct(aiProduct)
+      setIsProcessingImage(false)
+      setProcessingStep("")
+
+    } catch (error) {
+      console.error('Error processing image:', error)
+      
+      // Extract more detailed error information
+      let errorMessage = "Analysis failed, using fallback..."
+      let toastMessage = "AI analysis failed. Using basic product information."
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage = "API authentication failed. Please check configuration."
+          toastMessage = "API authentication issue. Using fallback mode."
+        } else if (error.message.includes('429')) {
+          errorMessage = "Rate limit exceeded. Please try again later."
+          toastMessage = "API rate limit reached. Using fallback mode."
+        } else if (error.message.includes('500')) {
+          errorMessage = "Server error. Using fallback mode."
+          toastMessage = "Server error occurred. Using fallback mode."
+        }
+      }
+      
+      setProcessingStep(errorMessage)
+      
+      // Show user-friendly error message
+      toast({
+        title: "Fallback mode activated",
+        description: toastMessage,
+        variant: "default",
+      })
+      
+      setTimeout(() => {
+        setProcessingStep("Creating basic product info...")
+      }, 2000)
+      
+      // Fallback to mock data if AI fails
+      const mockProduct: Product = {
+        id: `uploaded-${Date.now()}`,
+        name: "Product Detected",
+        price: "$5.99 - $19.99",
+        rating: 4.2,
+        reviews: 150,
+        image: imageData,
+        socialProof: {
+          friendsPurchased: Math.floor(Math.random() * 10) + 1,
+          friendsRecommend: Math.floor(Math.random() * 30) + 70,
+          locationPopularity: Math.floor(Math.random() * 20) + 60,
+          userClassPreference: Math.floor(Math.random() * 20) + 80,
+          trendingScore: Math.floor(Math.random() * 30) + 70,
+          recentActivity: `${Math.floor(Math.random() * 200) + 50} people scanned this in the last hour`,
+        },
+        friends: [
+          { name: "Emma W.", avatar: "/placeholder.svg?height=32&width=32", action: "bought", timeAgo: "2 days ago" },
+          { name: "Mike R.", avatar: "/placeholder.svg?height=32&width=32", action: "recommended", timeAgo: "1 week ago" },
+          { name: "Sarah L.", avatar: "/placeholder.svg?height=32&width=32", action: "reviewed", timeAgo: "3 days ago" },
+        ],
+        aiData: {
+          description: "Unable to analyze with AI. Please try again or scan a clearer image.",
+          category: "General",
+          features: ["Quality product"],
+          benefits: ["Available at Walmart"],
+          usage: "As intended",
+          whereToFind: ["Various departments"],
+          alternatives: [],
+          buyingTips: ["Check product reviews", "Compare prices"],
+          confidence: 50
+        }
+      }
+
+      saveImageToStorage(imageData, mockProduct)
+      setScannedProduct(mockProduct)
+      setIsProcessingImage(false)
+      setProcessingStep("")
     }
-
-    // Generate mock product data
-    const mockProduct: Product = {
-      id: `uploaded-${Date.now()}`,
-      name: "Great Value Organic Honey",
-      price: "$4.98",
-      rating: 4.5,
-      reviews: 1247,
-      image: imageData,
-      socialProof: {
-        friendsPurchased: Math.floor(Math.random() * 10) + 1,
-        friendsRecommend: Math.floor(Math.random() * 30) + 70,
-        locationPopularity: Math.floor(Math.random() * 20) + 60,
-        userClassPreference: Math.floor(Math.random() * 20) + 80,
-        trendingScore: Math.floor(Math.random() * 30) + 70,
-        recentActivity: `${Math.floor(Math.random() * 200) + 50} people scanned this in the last hour`,
-      },
-      friends: [
-        { name: "Emma W.", avatar: "/placeholder.svg?height=32&width=32", action: "bought", timeAgo: "2 days ago" },
-        { name: "Mike R.", avatar: "/placeholder.svg?height=32&width=32", action: "recommended", timeAgo: "1 week ago" },
-        { name: "Sarah L.", avatar: "/placeholder.svg?height=32&width=32", action: "reviewed", timeAgo: "3 days ago" },
-      ],
-    }
-
-    // Save to local storage
-    saveImageToStorage(imageData, mockProduct)
-
-    setScannedProduct(mockProduct)
-    setIsProcessingImage(false)
-    setProcessingStep("")
   }
 
   const handleUploadClick = () => {
@@ -429,8 +555,133 @@ function ScannerContent() {
                     <span className="font-medium">{scannedProduct.rating}</span>
                     <span className="text-gray-600">({scannedProduct.reviews.toLocaleString()} reviews)</span>
                   </div>
+                  {scannedProduct.aiData?.confidence && (
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-green-700">AI Confidence: {scannedProduct.aiData.confidence}%</span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* AI-Generated Product Information */}
+              {scannedProduct.aiData && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 space-y-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-gray-900">AI Shopping Assistant</h4>
+                  </div>
+
+                  {/* Product Description */}
+                  <div className="bg-white rounded-lg p-4">
+                    <h5 className="font-medium text-gray-900 mb-2">Product Description</h5>
+                    <p className="text-gray-700">{scannedProduct.aiData.description}</p>
+                    <div className="mt-2 inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {scannedProduct.aiData.category}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Key Features */}
+                    <div className="bg-white rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        Key Features
+                      </h5>
+                      <ul className="space-y-1">
+                        {scannedProduct.aiData.features.map((feature, index) => (
+                          <li key={index} className="text-sm text-gray-700 flex items-start">
+                            <span className="w-1 h-1 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Benefits */}
+                    <div className="bg-white rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                        <Heart className="w-4 h-4 text-red-500 mr-2" />
+                        Benefits
+                      </h5>
+                      <ul className="space-y-1">
+                        {scannedProduct.aiData.benefits.map((benefit, index) => (
+                          <li key={index} className="text-sm text-gray-700 flex items-start">
+                            <span className="w-1 h-1 bg-purple-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                            {benefit}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Usage and Location */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <Search className="w-4 h-4 text-blue-500 mr-2" />
+                        How to Use
+                      </h5>
+                      <p className="text-sm text-gray-700">{scannedProduct.aiData.usage}</p>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <MapPin className="w-4 h-4 text-green-500 mr-2" />
+                        Where to Find
+                      </h5>
+                      <div className="space-y-1">
+                        {scannedProduct.aiData.whereToFind.map((location, index) => (
+                          <div key={index} className="text-sm text-gray-700 bg-gray-50 px-2 py-1 rounded">
+                            {location}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alternatives */}
+                  {scannedProduct.aiData.alternatives.length > 0 && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                        <TrendingUp className="w-4 h-4 text-purple-500 mr-2" />
+                        Similar Alternatives
+                      </h5>
+                      <div className="space-y-2">
+                        {scannedProduct.aiData.alternatives.map((alt, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <div>
+                              <div className="font-medium text-sm">{alt.name}</div>
+                              <div className="text-xs text-gray-600">{alt.reason}</div>
+                            </div>
+                            <div className="font-semibold text-blue-600">{alt.price}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Buying Tips */}
+                  <div className="bg-white rounded-lg p-4">
+                    <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                      <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
+                      Smart Buying Tips
+                    </h5>
+                    <ul className="space-y-2">
+                      {scannedProduct.aiData.buyingTips.map((tip, index) => (
+                        <li key={index} className="text-sm text-gray-700 flex items-start">
+                          <div className="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                            <span className="text-yellow-600 text-xs font-bold">{index + 1}</span>
+                          </div>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               {/* Friends' Activity */}
               {scannedProduct.friends && scannedProduct.friends.length > 0 && (
@@ -496,19 +747,49 @@ function ScannerContent() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex space-x-3">
-                <Link href={`/social?product=${scannedProduct.id}`} className="flex-1">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Users className="w-4 h-4 mr-2" />
-                    View Community Discussion
-                  </Button>
-                </Link>
-                <Link href={`/sustainability?product=${scannedProduct.id}`}>
-                  <Button variant="outline">
-                    <Heart className="w-4 h-4 mr-2" />
-                    Check Sustainability
-                  </Button>
-                </Link>
+              <div className="space-y-4">
+                {/* Primary Purchase Actions */}
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+                  <h4 className="font-semibold text-lg mb-2 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Ready to Buy?
+                  </h4>
+                  <p className="text-blue-100 mb-4">Get the best deal with smart shopping insights</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button className="bg-white text-blue-600 hover:bg-gray-100 font-medium">
+                      🛒 Add to Cart - {scannedProduct.price}
+                    </Button>
+                    <Button variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                      📍 Find in Store
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <Button variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-sm">
+                      💰 Compare Prices
+                    </Button>
+                    <Button variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-sm">
+                      ⭐ Save for Later
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Secondary Actions */}
+                <div className="flex space-x-3">
+                  <Link href={`/social?product=${scannedProduct.id}`} className="flex-1">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Users className="w-4 h-4 mr-2" />
+                      View Community Discussion
+                    </Button>
+                  </Link>
+                  <Link href={`/sustainability?product=${scannedProduct.id}`}>
+                    <Button variant="outline">
+                      <Heart className="w-4 h-4 mr-2" />
+                      Check Sustainability
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -570,8 +851,10 @@ function ScannerContent() {
                 size="sm" 
                 className="text-red-500 hover:text-red-700"
                 onClick={() => {
-                  localStorage.removeItem('scanned-images')
-                  window.location.reload()
+                  if (typeof window !== 'undefined') {
+                    localStorage.removeItem('scanned-images')
+                    window.location.reload()
+                  }
                 }}
               >
                 Clear All

@@ -3,9 +3,8 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Scan, Users, Leaf, Trophy, MessageCircle, Menu, X, Search } from "lucide-react"
+import { Scan, Users, Leaf, Trophy, MessageCircle, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SearchTrigger } from "./search-trigger"
 import { cn } from "@/lib/utils"
 
 function HeaderContent() {
@@ -213,30 +212,6 @@ function HeaderContent() {
             </div>
           </>
         )}
-
-        {/* Mobile Search */}
-        <div className="lg:hidden pb-3">
-          <SearchTrigger
-            variant="input"
-            className="w-full"
-            userClassification="VIP_FREQUENT"
-            userLocation={{ city: "Austin", zipCode: "78701" }}
-          />
-        </div>
-
-        {/* Desktop Search - positioned below nav */}
-        <div className="hidden lg:block pb-3">
-          <div className="flex justify-center">
-            <div className="max-w-md w-full">
-              <SearchTrigger
-                variant="input"
-                className="w-full"
-                userClassification="VIP_FREQUENT"
-                userLocation={{ city: "Austin", zipCode: "78701" }}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </header>
   )
@@ -318,30 +293,6 @@ function HeaderFallback() {
             <Button variant="ghost" size="sm" className="p-2" disabled>
               <Menu className="w-5 h-5 text-gray-400" />
             </Button>
-          </div>
-        </div>
-
-        {/* Mobile search fallback */}
-        <div className="lg:hidden pb-3">
-          <div className="relative">
-            <div className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500">
-              Search products with social proof...
-            </div>
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-          </div>
-        </div>
-
-        {/* Desktop Search */}
-        <div className="hidden lg:block pb-3">
-          <div className="flex justify-center">
-            <div className="max-w-md w-full">
-              <div className="relative">
-                <div className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500">
-                  Search products with social proof...
-                </div>
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              </div>
-            </div>
           </div>
         </div>
       </div>

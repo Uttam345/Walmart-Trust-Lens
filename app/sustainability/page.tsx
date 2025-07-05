@@ -1,8 +1,8 @@
 import { Header } from "@/components/header"
 import { EcoMetrics } from "@/components/eco-metrics"
-import { SustainableProducts } from "@/components/sustainable-products"
 import { EcoTips } from "@/components/eco-tips"
 import { CarbonTracker } from "@/components/carbon-tracker"
+import { EcoScanner } from "@/components/eco-scanner"
 
 export default function SustainabilityPage() {
   return (
@@ -16,7 +16,7 @@ export default function SustainabilityPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <EcoMetrics />
-            <SustainableProducts />
+            <EcoScanner />
           </div>
           <div className="space-y-6">
             <CarbonTracker />
