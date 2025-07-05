@@ -7,7 +7,7 @@ const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    'X-Title': 'Walmart SmartScan Pro - Product Scanner',
+    'X-Title': 'Walmart TrustLens - Product Scanner',
   },
 })
 

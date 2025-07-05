@@ -7,7 +7,7 @@ const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002',
-    'X-Title': 'Walmart SmartScan Pro',
+    'X-Title': 'Walmart TrustLens',
   },
 })
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     requestMessages = messages || []
 
     // System prompt for Walmart shopping assistant
-    const systemPrompt = `You are an AI shopping assistant for Walmart SmartScan Pro, a smart shopping app that helps users make informed purchasing decisions.
+    const systemPrompt = `You are an AI shopping assistant for Walmart TrustLens, a transparent shopping app that helps users make informed purchasing decisions with trust and transparency.
 
 Your capabilities include:
 - Helping users find products and compare prices

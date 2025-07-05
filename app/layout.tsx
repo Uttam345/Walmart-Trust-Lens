@@ -8,9 +8,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Walmart SmartScan Pro - Social Proof Scanner",
+  title: "Walmart TrustLens - Transparent Shopping Intelligence",
   description:
-    "Make smarter purchases with community wisdom. Scan products and see what your friends, neighbors, and similar shoppers think.",
+    "Make informed purchases with transparency and trust. Scan products and see verified reviews, sustainability scores, and community insights.",
     generator: 'v0.dev'
 }
 

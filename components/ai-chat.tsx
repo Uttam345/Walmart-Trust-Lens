@@ -25,7 +25,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
     {
       id: 'welcome',
       type: 'bot',
-      content: "👋 Welcome to Walmart SmartScan Pro! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions. What are you looking for today?",
+      content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
       timestamp: new Date()
     }
   ])
@@ -70,7 +70,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
       {
         id: 'welcome',
         type: 'bot',
-        content: "👋 Welcome to Walmart SmartScan Pro! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions. What are you looking for today?",
+        content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
         timestamp: new Date()
       }
     ])

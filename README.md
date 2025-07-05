@@ -1,8 +1,8 @@
-# 🛒 Walmart SmartScan Pro
+# 🛒 Walmart TrustLens
 
-> **Revolutionizing retail through trusted social proof and sustainable shopping**
+> **Revolutionizing retail through transparency, trust, and intelligent shopping insights**
 
-A cutting-edge Next.js application that transforms shopping decisions by combining **real social validation** from your trusted network with **gamified sustainability** to create the ultimate omnichannel Walmart experience.
+A cutting-edge Next.js application that transforms shopping decisions by combining **verified product transparency** with **community-driven insights** to create the ultimate trusted omnichannel Walmart experience.
 
 ## 🌐 Live Demo
 

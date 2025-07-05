@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Home, Search, Scan } from "lucide-react"
+import { Home, Search, Shield } from "lucide-react"
 
 export default function NotFound() {
   return (
@@ -12,10 +12,10 @@ export default function NotFound() {
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Scan className="w-5 h-5 text-white" />
+                <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">SmartScan</h1>
+                <h1 className="text-lg font-semibold text-gray-900">TrustLens</h1>
                 <p className="text-xs text-gray-500">by Walmart</p>
               </div>
             </Link>

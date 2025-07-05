@@ -30,7 +30,7 @@ export function SocialFeed() {
       user: { name: "Emma L.", avatar: "/placeholder.svg?height=40&width=40", level: "Platinum" },
       time: "1 day ago",
       content:
-        "Love how the SmartScan helped me avoid a product with poor reviews. Saved me $30 and a lot of disappointment!",
+        "Love how TrustLens helped me avoid a product with poor reviews. Saved me $30 and a lot of disappointment!",
       likes: 45,
       comments: 15,
     },

@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Scan, Users, Leaf, Trophy, MessageCircle, Menu, X } from "lucide-react"
+import { Scan, Users, Leaf, Trophy, MessageCircle, Menu, X, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -31,14 +31,14 @@ function HeaderContent() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 z-50">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Scan className="w-5 h-5 text-white" />
+              <Shield className="w-5 h-5 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-gray-900">SmartScan</h1>
+              <h1 className="text-lg font-bold text-gray-900">TrustLens</h1>
               <p className="text-xs text-gray-500 -mt-1">by Walmart</p>
             </div>
             <div className="sm:hidden">
-              <h1 className="text-lg font-bold text-gray-900">SmartScan</h1>
+              <h1 className="text-lg font-bold text-gray-900">TrustLens</h1>
             </div>
           </Link>
 
@@ -115,10 +115,10 @@ function HeaderContent() {
               <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100/50">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                    <Scan className="w-5 h-5 text-white" />
+                    <Shield className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">SmartScan Menu</h3>
+                    <h3 className="font-bold text-gray-900">TrustLens Menu</h3>
                     <p className="text-xs text-gray-500">Navigate to any section</p>
                   </div>
                 </div>
@@ -224,14 +224,14 @@ function HeaderFallback() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Scan className="w-5 h-5 text-white" />
+              <Shield className="w-5 h-5 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-gray-900">SmartScan</h1>
+              <h1 className="text-lg font-bold text-gray-900">TrustLens</h1>
               <p className="text-xs text-gray-500 -mt-1">by Walmart</p>
             </div>
             <div className="sm:hidden">
-              <h1 className="text-lg font-bold text-gray-900">SmartScan</h1>
+              <h1 className="text-lg font-bold text-gray-900">TrustLens</h1>
             </div>
           </Link>
 

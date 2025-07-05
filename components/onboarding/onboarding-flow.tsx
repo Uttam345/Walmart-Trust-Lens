@@ -51,7 +51,7 @@ export function OnboardingFlow({ isOpen, onClose, onComplete }: OnboardingFlowPr
   const [showSkipConfirmation, setShowSkipConfirmation] = useState(false)
 
   const steps = [
-    { component: WelcomeStep, title: "Welcome to SmartScan", canSkip: false },
+    { component: WelcomeStep, title: "Welcome to TrustLens", canSkip: false },
     { component: ContactsPermissionStep, title: "Connect with Friends", canSkip: true },
     { component: LocationPermissionStep, title: "Local Insights", canSkip: true },
     { component: ShoppingPreferencesStep, title: "Shopping Habits", canSkip: false },
@@ -88,7 +88,7 @@ export function OnboardingFlow({ isOpen, onClose, onComplete }: OnboardingFlowPr
     }
 
     if (Array.isArray(data.categories)) {
-      sanitized.categories = data.categories.filter((item) => typeof item === "string")
+      sanitized.categories = (data.categories as string[]).filter((item: unknown): item is string => typeof item === "string")
     }
 
     if (typeof data.sustainabilityImportance === "number") {
@@ -238,10 +238,9 @@ export function OnboardingFlow({ isOpen, onClose, onComplete }: OnboardingFlowPr
               onNext={handleNext}
               onPrevious={handlePrevious}
               onSkip={handleSkip}
-              onSkipAll={currentStep === 0 ? handleSkipAll : undefined}
+              onSkipAll={currentStep === 0 ? handleSkipAll : () => {}}
               canSkip={steps[currentStep].canSkip}
               isFirst={currentStep === 0}
-              isLast={currentStep === steps.length - 1}
             />
           </div>
         </CardContent>

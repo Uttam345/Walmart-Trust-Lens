@@ -29,7 +29,7 @@ export function WelcomeStep({ onNext, onSkipAll, isFirst }: WelcomeStepProps) {
       <div>
         <h3 className="text-2xl font-bold text-gray-900 mb-4">Welcome to the Future of Shopping!</h3>
         <p className="text-lg text-gray-600 mb-6">
-          SmartScan uses the power of community to help you make smarter purchases at Walmart.
+          TrustLens uses the power of community to help you make smarter purchases at Walmart.
         </p>
       </div>
 

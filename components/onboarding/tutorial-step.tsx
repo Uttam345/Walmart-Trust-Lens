@@ -77,7 +77,7 @@ export function TutorialStep({ onNext, onPrevious, onSkip, canSkip }: TutorialSt
     <div className="space-y-6">
       <div className="text-center">
         <Play className="w-12 h-12 text-green-600 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-gray-900 mb-2">How SmartScan Works</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">How TrustLens Works</h3>
         <p className="text-gray-600">Quick tutorial on getting the most from social proof</p>
       </div>
 

@@ -59,7 +59,7 @@ async function testEcoScanAPI() {
 }
 
 // Usage instructions
-console.log('🌱 Walmart SmartScan Pro - Eco Scanner Test')
+console.log('🌱 Walmart TrustLens - Eco Scanner Test')
 console.log('=' .repeat(50))
 console.log()
 console.log('📋 Setup Instructions:')
