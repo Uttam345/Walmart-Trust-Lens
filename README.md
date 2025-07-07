@@ -70,10 +70,10 @@ Experience authentic social proof scanning and sustainable shopping gamification
 - **Real-time Processing** - Optimized frame processing for mobile devices
 
 ### **AI & Intelligence**
-- **OpenRouter API** - Multi-model AI assistant with intelligent product recommendations
-- **Claude 3.5 Sonnet** - Advanced image analysis for eco-scanner functionality
+- **Google Gemini AI** - Advanced multimodal AI for product analysis and recommendations
+- **Gemini 1.5 Pro** - Vision capabilities for image analysis and eco-scanner functionality
 - **Barcode Lookup API** - Real-time product data retrieval and validation
-- **Real-time Chat Interface** - Natural language product queries and support
+- **Real-time Chat Interface** - Natural language product queries with trust-focused responses
 
 ### **UI & Styling**
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework for rapid development
@@ -112,19 +112,19 @@ Experience authentic social proof scanning and sustainable shopping gamification
 3. **Set up environment variables**
    Create a `.env.local` file:
    ```env
-   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    NEXT_PUBLIC_BARCODE_API_KEY=your_barcode_api_key_here
    NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_APP_NAME=Walmart TrustLens
    ```
 
-   **Getting OpenRouter API Key:**
-   1. Visit [OpenRouter.ai](https://openrouter.ai/)
-   2. Sign up for an account
-   3. Go to API Keys section
-   4. Create a new API key
-   5. Copy the key to your `.env.local` file
+   **Getting Gemini API Key:**
+   1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   2. Sign in with your Google account
+   3. Click "Create API Key"
+   4. Copy the key to your `.env.local` file
 
-   **Note:** The eco-scanner uses Claude 3.5 Sonnet via OpenRouter for advanced image analysis.
+   **Note:** The AI assistant and eco-scanner use Google Gemini 1.5 Pro for advanced image analysis and natural language processing.
 
 4. **Run the development server**
    ```bash
@@ -189,7 +189,7 @@ components/
 - **Measurable Impact** - Track individual and community environmental contributions with precision
 
 ### **Technology Innovation**
-- **Advanced AI Integration** - Multi-model AI for image analysis, recommendations, and natural language processing
+- **Advanced AI Integration** - Google Gemini for multimodal analysis, trust scoring, and natural language processing
 - **Real-time Social Proof** - Instant access to trusted network insights while protecting privacy
 - **Omnichannel Excellence** - Unified experience across online and offline shopping channels
 

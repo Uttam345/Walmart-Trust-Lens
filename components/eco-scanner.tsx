@@ -27,6 +27,8 @@ import {
   Gift
 } from "lucide-react"
 import { getCurrentLocation } from "../lib/location-utils"
+import { RealtimeCameraScanner } from "./camera/realtime-camera-scanner"
+import { RealtimeEcoScanner } from "./realtime-eco-scanner"
 
 interface WasteItem {
   id: string
@@ -75,6 +77,8 @@ export function EcoScanner() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [wasteInput, setWasteInput] = useState("")
   const [showDropOffLocations, setShowDropOffLocations] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
+  const [showRealtimeEcoScanner, setShowRealtimeEcoScanner] = useState(false)
   const [nearbyLocations, setNearbyLocations] = useState<DropOffLocation[]>([])
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
@@ -362,6 +366,38 @@ export function EcoScanner() {
     }
   }
 
+  // Camera handlers
+  const handleCameraOpen = () => {
+    setShowCamera(true)
+  }
+
+  const handleCameraClose = () => {
+    setShowCamera(false)
+  }
+
+  const handleCameraScanComplete = (result: any) => {
+    // Convert the scan result to waste item format
+    const wasteItem: WasteItem = {
+      id: Date.now().toString(),
+      name: result.itemName || result.productName || "Scanned Item",
+      type: result.category || "unknown",
+      category: result.category as WasteItem["category"] || "general",
+      condition: result.condition || "good",
+      confidence: result.confidence || 85,
+      disposalMethod: result.disposalMethod || "Check local recycling guidelines",
+      environmentalImpact: result.environmentalImpact || result.overallRecommendation || "Proper disposal helps reduce environmental impact",
+      nearbyLocations: result.whereToFind || [],
+      tips: result.tips || result.buyingTips || ["Dispose of responsibly"],
+      recommendations: result.recommendations || result.alternatives?.map((alt: any) => alt.reason) || []
+    }
+
+    setSelectedWaste(wasteItem)
+    setShowCamera(false)
+    
+    // Update stats
+    updateUserStats(wasteItem.confidence || 85, 1500, 3)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -468,13 +504,34 @@ export function EcoScanner() {
                         <div>• Max 10MB, JPEG/PNG/WebP</div>
                       </div>
                     </div>
-                    <Button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md"
-                    >
-                      <Camera className="w-4 h-4 mr-2" />
-                      Choose Photo
-                    </Button>
+                    <div className="space-y-3">
+                      <Button 
+                        onClick={() => setShowRealtimeEcoScanner(true)}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md"
+                      >
+                        <TreePine className="w-4 h-4 mr-2" />
+                        Real-Time Eco Scanner
+                      </Button>
+                      <div className="text-center text-sm text-gray-500">or</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button 
+                          onClick={handleCameraOpen}
+                          variant="outline"
+                          className="border-green-200 text-green-700 hover:bg-green-50"
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          Camera
+                        </Button>
+                        <Button 
+                          onClick={() => fileInputRef.current?.click()}
+                          variant="outline"
+                          className="border-green-200 text-green-700 hover:bg-green-50"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -956,6 +1013,52 @@ export function EcoScanner() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Real-time Camera Scanner */}
+      <RealtimeCameraScanner 
+        isOpen={showCamera} 
+        onClose={handleCameraClose} 
+        onScanComplete={handleCameraScanComplete}
+        mode="eco"
+      />
+
+      {/* Real-time Eco Scanner Dialog */}
+      <Dialog open={showRealtimeEcoScanner} onOpenChange={setShowRealtimeEcoScanner}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TreePine className="w-5 h-5 text-green-600" />
+              Real-Time Eco Scanner
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <RealtimeEcoScanner 
+              onResult={(result) => {
+                // Convert real-time result to waste item format
+                const wasteItem: WasteItem = {
+                  id: result.itemName.toLowerCase().replace(/\s+/g, '_'),
+                  name: result.itemName,
+                  type: result.quickAnalysis,
+                  category: result.category === 'waste' ? 'general' : 
+                          result.category === 'recycle' ? 'recyclable' :
+                          result.category === 'hazardous' ? 'hazardous' :
+                          result.category === 'unknown' ? 'general' :
+                          result.category,
+                  condition: result.condition === 'unclear' ? 'poor' : result.condition,
+                  confidence: result.confidence,
+                  disposalMethod: `Follow ${result.category} guidelines based on analysis`,
+                  environmentalImpact: `Sustainability score: ${result.sustainabilityScore}/100. Carbon impact: ${result.carbonImpact}`,
+                  nearbyLocations: [],
+                  tips: result.quickTips,
+                  recommendations: [`Action required: ${result.actionRequired || 'research'}`]
+                }
+                setSelectedWaste(wasteItem)
+              }}
+              className="min-h-[500px]"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

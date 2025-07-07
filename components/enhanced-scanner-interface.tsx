@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, Upload, Search, Star, TrendingUp, Users, MapPin, Heart, Zap, FileImage, CheckCircle, AlertCircle, Sparkles } from "lucide-react"
-import { CameraScanner } from "./camera/camera-scanner-backup-fixed"
+import { RealtimeCameraScanner } from "./camera/realtime-camera-scanner"
 import { useToast } from "@/hooks/use-toast"
 
 function ScannerContent() {
@@ -865,7 +865,12 @@ function ScannerContent() {
       )}
 
       {/* Camera Scanner Modal */}
-      <CameraScanner isOpen={showCamera} onClose={handleCameraClose} onScanComplete={handleScanComplete} />
+      <RealtimeCameraScanner 
+        isOpen={showCamera} 
+        onClose={handleCameraClose} 
+        onScanComplete={handleScanComplete}
+        mode="product"
+      />
     </div>
   )
 }

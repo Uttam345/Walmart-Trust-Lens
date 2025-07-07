@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { getVisionModel, base64ToGenerativePart, validateGeminiEnvironment } from '@/lib/gemini'
 
-// Initialize OpenAI client with OpenRouter configuration
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-  defaultHeaders: {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    'X-Title': 'Walmart TrustLens - Eco Scanner',
-  },
-})
+// Validate environment variables
+try {
+  validateGeminiEnvironment()
+} catch (error) {
+  console.error('Environment validation failed:', error)
+}
 
 interface EcoScanResult {
   itemName: string
@@ -78,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`Processing image: ${image.name}, Size: ${(image.size / 1024 / 1024).toFixed(2)}MB, Type: ${mimeType}`)
 
-    // Analyze image with OpenRouter
+    // Analyze image with Gemini Pro Vision
     const ecoScanResult = await analyzeImageForEcoScanning(base64Image, mimeType)
     
     // Get nearby locations based on user location and scan result
@@ -103,17 +100,38 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Eco-scan API Error:', error)
     
+    // Handle specific rate limit errors
+    if (error instanceof Error) {
+      if (error.message.includes('429') || error.message.includes('rate limit') || error.message.includes('quota')) {
+        return NextResponse.json({
+          success: false,
+          error: 'API rate limit exceeded. Please wait a moment before trying again.',
+          errorType: 'RATE_LIMIT',
+          retryAfter: 30 // seconds
+        }, { status: 429 })
+      }
+      
+      if (error.message.includes('API key')) {
+        return NextResponse.json({
+          success: false,
+          error: 'API configuration error. Please contact support.',
+          errorType: 'CONFIG_ERROR'
+        }, { status: 503 })
+      }
+    }
+    
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to analyze image',
+      errorType: 'GENERAL_ERROR'
     }, { status: 500 })
   }
 }
 
 async function analyzeImageForEcoScanning(base64Image: string, mimeType: string): Promise<EcoScanResult> {
-  const systemPrompt = `You are an expert eco-scanner AI that analyzes images of items to determine their disposal category and environmental impact. 
+  const systemPrompt = `You are TrustLens Eco-AI, analyzing items for environmental impact and sustainable disposal. 
 
-Analyze the uploaded image carefully and determine:
+Analyze this image carefully and determine:
 1. What is the specific item? (be very specific about brand, model, material if visible)
 2. What exact condition is it in? (look for wear, damage, functionality indicators)
 3. What's the best disposal/reuse method based on condition and material?
@@ -134,13 +152,6 @@ Conditions (assess carefully):
 - "poor": Heavily worn, damaged, likely only suitable for recycling or disposal
 - "hazardous": Contains dangerous materials regardless of physical condition
 
-Important: 
-- Examine image quality, lighting, and clarity to provide accurate assessment
-- If image is blurry or unclear, mention this and provide general guidance
-- Give confidence score based on image clarity and item recognition
-- Provide specific, actionable recommendations
-- Consider local regulations and best practices
-
 Provide your response as a JSON object with these exact fields:
 {
   "itemName": "specific name of the item with details",
@@ -155,62 +166,92 @@ Provide your response as a JSON object with these exact fields:
 }`
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'anthropic/claude-3.5-sonnet',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Please analyze this image for eco-scanning. Examine the item carefully for condition, material, brand markings, damage, and any other relevant details. Provide detailed disposal recommendations based on what you observe.'
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType};base64,${base64Image}`,
-                detail: 'high'
-              }
-            }
-          ]
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 1500,
-    })
+    const model = getVisionModel()
+    const prompt = `${systemPrompt}
 
-    const responseText = completion.choices[0]?.message?.content || '{}'
-    
-    // Extract JSON from response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      console.error('AI Response format error:', responseText)
-      throw new Error('Invalid response format from AI')
+Please analyze this image for eco-scanning. Examine the item carefully for condition, material, brand markings, damage, and any other relevant details. Provide detailed disposal recommendations based on what you observe.`
+
+    // Create image part for Gemini
+    const imagePart = base64ToGenerativePart(base64Image, mimeType)
+
+    const result = await model.generateContent([prompt, imagePart])
+    const response = await result.response
+    const responseText = response.text()
+
+    // Parse JSON response
+    let parsedResult: EcoScanResult
+    try {
+      const cleanText = responseText.replace(/```json\n?|\n?```/g, '').trim()
+      parsedResult = JSON.parse(cleanText)
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', parseError)
+      console.log('Raw response:', responseText)
+      
+      // Enhanced fallback response with more detail
+      parsedResult = {
+        itemName: "Item Analysis",
+        category: "recycle",
+        condition: "good",
+        confidence: 0.6,
+        analysis: "Analysis temporarily unavailable. Please ensure good lighting and clear view of the item, then try again.",
+        recommendations: [
+          "Take a clearer photo with better lighting",
+          "Check with local recycling center for guidance",
+          "Consider donation if item is functional",
+          "Look for manufacturer disposal programs"
+        ],
+        environmentalImpact: "Proper disposal helps reduce landfill waste and supports circular economy principles.",
+        disposalMethod: "Contact local waste management services or check municipal guidelines for proper disposal methods.",
+        tips: [
+          "Clean the item before disposal",
+          "Remove any personal information or data",
+          "Check local guidelines for specific requirements",
+          "Consider repair or donation if item is still functional"
+        ]
+      }
     }
 
-    const result = JSON.parse(jsonMatch[0]) as EcoScanResult
-    
-    // Validate required fields
-    if (!result.itemName || !result.category || !result.condition) {
-      console.error('Incomplete analysis result:', result)
-      throw new Error('Incomplete analysis result')
-    }
-
-    // Ensure confidence is within valid range
-    if (typeof result.confidence !== 'number' || result.confidence < 0 || result.confidence > 1) {
-      result.confidence = 0.8
-    }
-
-    return result
+    return parsedResult
 
   } catch (error) {
-    console.error('AI Analysis Error:', error)
-    // Enhanced fallback response
+    console.error('Gemini Eco-Analysis Error:', error)
+    
+    // Enhanced error handling for rate limits
+    if (error instanceof Error && (
+      error.message.includes('429') || 
+      error.message.includes('Too Many Requests') ||
+      error.message.includes('quota') ||
+      error.message.includes('rate limit')
+    )) {
+      // Return a more informative fallback for rate limits
+      return {
+        itemName: "Rate Limit Reached",
+        category: "recycle" as const,
+        condition: "fair" as const,
+        confidence: 0.3,
+        analysis: "API rate limit exceeded. This is a temporary restriction from our AI service. Please wait a moment and try again.",
+        recommendations: [
+          "Wait 30-60 seconds before trying again",
+          "Use manual disposal guidelines below",
+          "Check local recycling programs",
+          "Consider item condition for donation vs disposal"
+        ],
+        environmentalImpact: "Proper disposal regardless of analysis method helps protect our environment.",
+        disposalMethod: "Follow local waste management guidelines while waiting for full analysis capability to return.",
+        tips: [
+          "Most electronics can be recycled at specialized centers",
+          "Textiles in good condition can often be donated",
+          "Check manufacturer websites for disposal programs",
+          "Clean items before disposal or donation"
+        ]
+      }
+    }
+    
+    // Enhanced fallback response for other errors
     return {
       itemName: 'Unknown Item - Image Analysis Failed',
-      category: 'waste',
-      condition: 'fair',
+      category: 'waste' as const,
+      condition: 'fair' as const,
       confidence: 0.3,
       analysis: 'Unable to analyze the image clearly. This could be due to poor lighting, blur, or image quality issues. For best results, ensure the item is well-lit, in focus, and fills most of the frame.',
       recommendations: [
@@ -316,6 +357,6 @@ export async function GET() {
     supportedFormats: ['image/jpeg', 'image/png', 'image/webp'],
     maxFileSize: '10MB',
     locationServices: 'Ready for integration',
-    aiModel: 'Claude 3.5 Sonnet'
+    aiModel: 'Gemini Pro Vision'
   })
 }

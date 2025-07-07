@@ -1,42 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { getVisionModel, base64ToGenerativePart, validateGeminiEnvironment } from '@/lib/gemini'
 
-// Initialize OpenAI client with OpenRouter configuration
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-  defaultHeaders: {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    'X-Title': 'Walmart TrustLens - Product Scanner',
-  },
-})
+// Validate environment variables
+try {
+  validateGeminiEnvironment()
+} catch (error) {
+  console.error('Environment validation failed:', error)
+}
 
 interface ProductScanResult {
   productName: string
   description: string
   category: string
   estimatedPrice: string
+  trustScore?: number
+  valueScore?: number
+  sustainabilityScore?: number
   features: string[]
   benefits: string[]
-  usage: string
+  safetyNotes?: string[]
   whereToFind: string[]
   alternatives: Array<{
     name: string
     price: string
+    trustScore?: number
     reason: string
   }>
   buyingTips: string[]
+  overallRecommendation?: string
   confidence: number
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Check if API key is configured
-    if (!process.env.OPENROUTER_API_KEY) {
-      console.error('OPENROUTER_API_KEY not configured')
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not configured')
       return NextResponse.json({
         success: false,
-        error: 'API key not configured. Please set OPENROUTER_API_KEY environment variable.'
+        error: 'API key not configured. Please set GEMINI_API_KEY environment variable.'
       }, { status: 500 })
     }
 
@@ -56,207 +58,148 @@ export async function POST(request: NextRequest) {
     const base64Image = buffer.toString('base64')
     const mimeType = image.type
 
-    // Create the AI prompt for product analysis
-    const prompt = `You are a shopping assistant AI. Analyze this product image and provide detailed information to help the user make an informed purchase decision.
+    // Create the AI prompt for TrustLens product analysis
+    const prompt = `You are TrustLens AI, a sophisticated product analysis system for Walmart shoppers. Analyze this product image and provide comprehensive insights in valid JSON format.
 
-Please identify:
-1. What the product is (name and description)
-2. Product category
-3. Estimated price range at Walmart
-4. Key features and benefits
-5. How to use it / what it's for
-6. Where to find it in store (department/aisle)
-7. Similar alternatives with prices
-8. Buying tips and considerations
+ANALYSIS REQUIREMENTS:
+1. Product Identification: Name, brand, model, key features
+2. Trust Assessment: Rate trustworthiness (1-10) based on brand reputation, quality indicators, packaging, certifications
+3. Value Analysis: Price estimation, value rating (1-10), comparison insights
+4. Safety & Quality: Visible quality issues, certifications, material concerns
+5. Sustainability: Eco-friendliness rating (1-10), packaging analysis, environmental impact
+6. Shopping Guidance: Purchase recommendation, alternatives, key checks, store location tips
 
-Provide the response in a JSON format with these exact fields:
+RESPONSE FORMAT (valid JSON only):
 {
-  "productName": "string",
-  "description": "string", 
-  "category": "string",
-  "estimatedPrice": "string (e.g., '$5.99 - $8.99')",
-  "features": ["array of key features"],
-  "benefits": ["array of benefits"],
-  "usage": "string describing how to use",
-  "whereToFind": ["array of store locations like 'Electronics Department', 'Aisle 12'"],
-  "alternatives": [{"name": "string", "price": "string", "reason": "string"}],
-  "buyingTips": ["array of helpful buying tips"],
-  "confidence": number (0-100)
+  "productName": "exact product name with brand",
+  "description": "detailed product description", 
+  "category": "product category",
+  "estimatedPrice": "$X.XX - $Y.YY range at Walmart",
+  "trustScore": number between 1-10,
+  "valueScore": number between 1-10,
+  "sustainabilityScore": number between 1-10,
+  "features": ["key feature 1", "key feature 2", "key feature 3"],
+  "benefits": ["benefit 1", "benefit 2", "benefit 3"],
+  "safetyNotes": ["safety consideration 1", "safety consideration 2"],
+  "whereToFind": ["Grocery section", "Health & Wellness", "etc"],
+  "alternatives": [
+    {
+      "name": "alternative product name",
+      "price": "$X.XX",
+      "trustScore": number,
+      "reason": "why this alternative"
+    }
+  ],
+  "buyingTips": ["tip 1", "tip 2", "tip 3"],
+  "overallRecommendation": "clear recommendation with reasoning",
+  "confidence": number between 0-100
 }
 
-Be helpful, accurate, and focus on providing actionable shopping advice.`
+IMPORTANT: 
+- Respond ONLY with valid JSON
+- No markdown formatting
+- Be specific about Walmart pricing and availability
+- Focus on trust, transparency, and informed decision-making
+- Provide actionable shopping advice`
 
-    // Call OpenRouter API with Claude 3.5 Sonnet
-    console.log('Calling OpenRouter API...')
+    const model = getVisionModel()
     
+    // Create image part for Gemini
+    const imagePart = base64ToGenerativePart(base64Image, mimeType)
+
+    console.log('Calling Gemini Vision API...')
+    
+    const result = await model.generateContent([prompt, imagePart])
+    const response = await result.response
+    const text = response.text()
+
+    console.log('Gemini API Response received')
+
+    // Try to parse the JSON response
+    let productData: ProductScanResult
     try {
-      const response = await openai.chat.completions.create({
-        model: 'anthropic/claude-3.5-sonnet',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: prompt
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${base64Image}`
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 1500,
-        temperature: 0.7,
-      })
-
-      console.log('OpenRouter API response received')
-      const aiResponse = response.choices[0]?.message?.content
+      // Clean the response - remove any markdown formatting
+      const cleanText = text.replace(/```json\n?|\n?```/g, '').trim()
+      productData = JSON.parse(cleanText)
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError)
+      console.log('Raw response:', text)
       
-      if (!aiResponse) {
-        console.error('No response content from AI')
-        throw new Error('No response from AI')
-      }
-
-      // Parse the JSON response from AI
-      let scanResult: ProductScanResult
-      try {
-        scanResult = JSON.parse(aiResponse)
-      } catch (parseError) {
-        console.warn('AI response parsing failed, using fallback:', parseError)
-        // If JSON parsing fails, create a fallback response
-        scanResult = {
-          productName: "Product Detected",
-          description: "Product identified in image",
-          category: "General",
-          estimatedPrice: "$5.99 - $19.99",
-          features: ["Quality product", "Available at Walmart"],
-          benefits: ["Convenient", "Good value"],
-          usage: "As intended by manufacturer",
-          whereToFind: ["Various departments"],
-          alternatives: [
-            { name: "Similar product", price: "$4.99", reason: "Budget option" }
-          ],
-          buyingTips: ["Check reviews", "Compare prices"],
-          confidence: 75
-        }
-      }
-
-      // Generate mock social proof data
-      const socialProof = {
-        friendsPurchased: Math.floor(Math.random() * 10) + 1,
-        friendsRecommend: Math.floor(Math.random() * 30) + 70,
-        locationPopularity: Math.floor(Math.random() * 20) + 60,
-        userClassPreference: Math.floor(Math.random() * 20) + 80,
-        trendingScore: Math.floor(Math.random() * 30) + 70,
-        recentActivity: `${Math.floor(Math.random() * 200) + 50} people scanned this in the last hour`,
-      }
-
-      const friends = [
-        { name: "Emma W.", avatar: "/placeholder.svg?height=32&width=32", action: "bought", timeAgo: "2 days ago" },
-        { name: "Mike R.", avatar: "/placeholder.svg?height=32&width=32", action: "recommended", timeAgo: "1 week ago" },
-        { name: "Sarah L.", avatar: "/placeholder.svg?height=32&width=32", action: "reviewed", timeAgo: "3 days ago" },
-      ]
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          ...scanResult,
-          rating: 4.0 + Math.random() * 1, // Random rating between 4.0-5.0
-          reviews: Math.floor(Math.random() * 2000) + 100,
-          socialProof,
-          friends,
-          id: `ai-scan-${Date.now()}`,
-          image: `data:${mimeType};base64,${base64Image}`
-        }
-      })
-      
-    } catch (apiError) {
-      console.error('OpenRouter API error:', apiError)
-      
-      // If AI fails, return a fallback response instead of throwing
-      console.log('Using fallback response due to AI API failure')
-      
-      const fallbackResult: ProductScanResult = {
-        productName: "Product Detected",
-        description: "AI analysis temporarily unavailable. Basic product information provided.",
+      // Fallback response if JSON parsing fails
+      productData = {
+        productName: "Product Analysis",
+        description: "Product detected in image",
         category: "General",
         estimatedPrice: "$5.99 - $19.99",
-        features: ["Quality product", "Available at Walmart", "Please check product details"],
-        benefits: ["Convenient shopping", "Good value"],
-        usage: "Please refer to product packaging for usage instructions",
-        whereToFind: ["Various departments", "Ask store associate for location"],
-        alternatives: [
-          { name: "Similar products available", price: "Varies", reason: "Compare in store" }
-        ],
-        buyingTips: ["Check product reviews", "Compare prices", "Ask store associate for recommendations"],
+        trustScore: 7,
+        valueScore: 7,
+        sustainabilityScore: 6,
+        features: ["Visible in image"],
+        benefits: ["As shown in product image"],
+        safetyNotes: ["Please verify safety information"],
+        whereToFind: ["Ask store associate for location"],
+        alternatives: [],
+        buyingTips: ["Check product reviews", "Compare with similar items", "Verify return policy"],
+        overallRecommendation: "Consider your specific needs and compare with alternatives before purchasing.",
         confidence: 60
       }
-
-      const socialProof = {
-        friendsPurchased: Math.floor(Math.random() * 10) + 1,
-        friendsRecommend: Math.floor(Math.random() * 30) + 70,
-        locationPopularity: Math.floor(Math.random() * 20) + 60,
-        userClassPreference: Math.floor(Math.random() * 20) + 80,
-        trendingScore: Math.floor(Math.random() * 30) + 70,
-        recentActivity: `${Math.floor(Math.random() * 200) + 50} people scanned this in the last hour`,
-      }
-
-      const friends = [
-        { name: "Emma W.", avatar: "/placeholder.svg?height=32&width=32", action: "bought", timeAgo: "2 days ago" },
-        { name: "Mike R.", avatar: "/placeholder.svg?height=32&width=32", action: "recommended", timeAgo: "1 week ago" },
-        { name: "Sarah L.", avatar: "/placeholder.svg?height=32&width=32", action: "reviewed", timeAgo: "3 days ago" },
-      ]
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          ...fallbackResult,
-          rating: 4.0 + Math.random() * 1,
-          reviews: Math.floor(Math.random() * 2000) + 100,
-          socialProof,
-          friends,
-          id: `fallback-scan-${Date.now()}`,
-          image: `data:${mimeType};base64,${base64Image}`,
-          aiError: true // Flag to indicate fallback was used
-        }
-      })
     }
+
+    // Add some enhanced data for better UX
+    const enhancedData = {
+      ...productData,
+      scanTimestamp: new Date().toISOString(),
+      model: 'gemini-1.5-pro',
+      provider: 'Google Gemini',
+      trustAnalysis: {
+        trustScore: productData.trustScore || 7,
+        valueScore: productData.valueScore || 7,
+        sustainabilityScore: productData.sustainabilityScore || 6,
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: enhancedData,
+      message: 'Product analyzed successfully with TrustLens AI'
+    })
 
   } catch (error) {
-    console.error('Product scan error:', error)
+    console.error('Gemini Vision API Error:', error)
     
-    // More detailed error logging
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
-    
-    // Check for specific OpenRouter errors
-    let errorMessage = 'Failed to analyze product image'
-    let statusCode = 500
-    
-    if (error instanceof Error) {
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
-        errorMessage = 'API authentication failed. Please check your OpenRouter API key.'
-        statusCode = 401
-      } else if (error.message.includes('429')) {
-        errorMessage = 'API rate limit exceeded. Please try again later.'
-        statusCode = 429
-      } else if (error.message.includes('insufficient_quota')) {
-        errorMessage = 'API quota exceeded. Please check your OpenRouter account.'
-        statusCode = 402
-      }
-    }
-    
-    // Return a helpful error response
+    // Return fallback response
     return NextResponse.json({
       success: false,
-      error: errorMessage,
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: statusCode })
+      error: 'Failed to analyze product. Please try again.',
+      fallback: true,
+      data: {
+        productName: "Product Scan Error",
+        description: "Unable to analyze product at this time",
+        category: "Unknown",
+        estimatedPrice: "Please check Walmart.com",
+        trustScore: 5,
+        valueScore: 5,
+        sustainabilityScore: 5,
+        features: ["Unable to detect"],
+        benefits: ["Please try scanning again"],
+        safetyNotes: ["Verify product information manually"],
+        whereToFind: ["Ask store associate"],
+        alternatives: [],
+        buyingTips: ["Try scanning again with better lighting", "Ensure product is clearly visible"],
+        overallRecommendation: "Please try scanning again or search for the product manually.",
+        confidence: 0,
+        scanTimestamp: new Date().toISOString(),
+        model: 'gemini-fallback'
+      }
+    }, { status: 500 })
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    status: 'TrustLens Product Scanner API is running',
+    timestamp: new Date().toISOString(),
+    model: 'gemini-1.5-pro',
+    provider: 'Google Gemini',
+  })
 }

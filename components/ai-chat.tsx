@@ -26,11 +26,11 @@ export function AIChat({ context }: { context?: ChatContext }) {
       id: 'welcome',
       type: 'bot',
       content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
-      timestamp: new Date()
     }
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -46,6 +46,18 @@ export function AIChat({ context }: { context?: ChatContext }) {
   useEffect(() => {
     // Focus input on mount
     inputRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    // Set hydrated state after client-side hydration
+    setIsHydrated(true)
+    
+    // Add timestamp to welcome message after hydration
+    setMessages(prev => prev.map(msg => 
+      msg.id === 'welcome' && !msg.timestamp 
+        ? { ...msg, timestamp: new Date() }
+        : msg
+    ))
   }, [])
 
   const copyToClipboard = async (text: string) => {
@@ -71,7 +83,6 @@ export function AIChat({ context }: { context?: ChatContext }) {
         id: 'welcome',
         type: 'bot',
         content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
-        timestamp: new Date()
       }
     ])
     toast({
@@ -185,11 +196,11 @@ export function AIChat({ context }: { context?: ChatContext }) {
         }
         setMessages(prev => [...prev, botMessage])
         
-        // Show a subtle indicator if this was a fallback response
-        if (data.fallback) {
+        // Only show fallback indicator if truly using fallback mode due to API issues
+        if (data.fallback && data.error?.includes('quota')) {
           toast({
-            title: "Using fallback mode",
-            description: "AI services are limited, but I can still help with basic shopping questions!",
+            title: "High demand detected",
+            description: "Using basic mode due to high API usage. Full AI features will return shortly!",
           })
         }
       } else {
@@ -257,7 +268,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
                 <span className="font-medium text-sm text-gray-900">
                   {isUser ? "You" : "Assistant"}
                 </span>
-                {message.timestamp && (
+                {message.timestamp && isHydrated && (
                   <span className="text-xs text-gray-500 hidden md:inline">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
