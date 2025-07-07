@@ -1,6 +1,7 @@
 import { Header } from "@/components/header"
 import { EnhancedScannerInterface } from "@/components/enhanced-scanner-interface"
 import { RecentScans } from "@/components/recent-scans"
+import SocialProofScanner from "@/components/social-proof-scanner"
 import { Scan, QrCode, Camera, Sparkles, TrendingUp, Users } from "lucide-react"
 
 export default function ScannerPage() {
@@ -57,7 +58,8 @@ export default function ScannerPage() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-8">
-            <EnhancedScannerInterface />
+            {/* Social Proof Scanner */}
+            <SocialProofScanner />
             
             {/* Quick Stats */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">

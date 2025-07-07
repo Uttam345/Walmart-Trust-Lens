@@ -75,11 +75,26 @@ export function RealtimeCameraScanner({
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
-        setHasPermission(true)
-        setDetectionStatus("Camera ready - Position your item in the frame")
         
-        // Start real-time analysis
-        startRealtimeAnalysis()
+        // Ensure video plays
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              setHasPermission(true)
+              setDetectionStatus("Camera ready - Position your item in the frame")
+            }).catch((playError) => {
+              console.error('Video play error:', playError)
+              setDetectionStatus("Camera ready - tap to enable video")
+              setHasPermission(true)
+            })
+          }
+        }
+        
+        videoRef.current.onerror = (error) => {
+          console.error('Video element error:', error)
+          setDetectionStatus("Video error - please try again")
+          setHasPermission(false)
+        }
       }
     } catch (error) {
       console.error('Camera initialization error:', error)
@@ -399,18 +414,38 @@ export function RealtimeCameraScanner({
     }
   }, [captureFrame, mode, onScanComplete, onClose, toast])
 
+  // Manual video start helper
+  const handleVideoClick = useCallback(async () => {
+    if (videoRef.current) {
+      try {
+        await videoRef.current.play()
+        setDetectionStatus("Camera ready - Position your item in the frame")
+        startRealtimeAnalysis()
+      } catch (error) {
+        console.error('Manual video play error:', error)
+      }
+    }
+  }, [startRealtimeAnalysis])
+
   // Initialize camera when component opens
   useEffect(() => {
     if (isOpen && hasPermission === null) {
       initializeCamera()
+    } else if (!isOpen) {
+      stopCamera()
     }
     
     return () => {
-      if (!isOpen) {
-        stopCamera()
-      }
+      stopCamera()
     }
-  }, [isOpen, hasPermission, initializeCamera, stopCamera])
+  }, [isOpen, hasPermission])
+
+  // Start real-time analysis when camera becomes ready
+  useEffect(() => {
+    if (hasPermission === true && autoScanEnabled) {
+      startRealtimeAnalysis()
+    }
+  }, [hasPermission, autoScanEnabled, startRealtimeAnalysis])
 
   // Calculate scan frame position
   useEffect(() => {
@@ -474,6 +509,7 @@ export function RealtimeCameraScanner({
               playsInline
               muted
               className="w-full h-full object-cover"
+              onClick={handleVideoClick}
             />
             
             {/* Scan Frame Overlay */}

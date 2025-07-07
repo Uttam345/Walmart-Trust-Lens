@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, Upload, Search, Star, TrendingUp, Users, MapPin, Heart, Zap, FileImage, CheckCircle, AlertCircle, Sparkles } from "lucide-react"
-import { RealtimeCameraScanner } from "./camera/realtime-camera-scanner"
+import { CameraScanner } from "./camera/camera-scanner"
 import { useToast } from "@/hooks/use-toast"
 
 function ScannerContent() {
@@ -499,6 +499,31 @@ function ScannerContent() {
                       Open Camera Scanner
                     </Button>
                     
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                          console.log("Camera test successful", stream)
+                          toast({
+                            title: "Camera Test Successful",
+                            description: "Camera access is working properly",
+                          })
+                          stream.getTracks().forEach(track => track.stop())
+                        } catch (error) {
+                          console.error("Camera test failed:", error)
+                          toast({
+                            title: "Camera Test Failed",
+                            description: "Camera access is not available",
+                            variant: "destructive",
+                          })
+                        }
+                      }}
+                      className="border-green-200 text-green-700 hover:bg-green-50"
+                    >
+                      Test Camera Access
+                    </Button>
+                    
                     <Button onClick={handleUploadClick} variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
                       <Upload className="w-4 h-4 mr-2" />
                       Upload Image
@@ -865,11 +890,10 @@ function ScannerContent() {
       )}
 
       {/* Camera Scanner Modal */}
-      <RealtimeCameraScanner 
+      <CameraScanner 
         isOpen={showCamera} 
         onClose={handleCameraClose} 
         onScanComplete={handleScanComplete}
-        mode="product"
       />
     </div>
   )

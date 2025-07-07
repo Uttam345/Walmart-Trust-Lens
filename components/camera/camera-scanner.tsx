@@ -283,6 +283,13 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
         // Add event listener for when video metadata is loaded
         videoRef.current.onloadedmetadata = () => {
           addDebugInfo("Video metadata loaded")
+          // Ensure video starts playing
+          if (videoRef.current) {
+            videoRef.current.play().catch((playError) => {
+              console.error('Video play error:', playError)
+              addDebugInfo(`Video play error: ${playError}`)
+            })
+          }
         }
         
         // Add event listener for video errors
@@ -448,6 +455,34 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
     setScanProgress(0)
   }
 
+  // Manual video start helper
+  const handleVideoClick = async () => {
+    if (videoRef.current) {
+      try {
+        await videoRef.current.play()
+        addDebugInfo("Video started manually")
+      } catch (error) {
+        console.error('Manual video play error:', error)
+        addDebugInfo(`Manual video play error: ${error}`)
+      }
+    }
+  }
+
+  // Debug camera functionality
+  const testCameraAccess = async () => {
+    try {
+      console.log("Testing camera access...")
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      console.log("Camera access granted:", stream)
+      stream.getTracks().forEach(track => track.stop())
+      console.log("Camera test successful")
+      return true
+    } catch (error) {
+      console.error("Camera access denied:", error)
+      return false
+    }
+  }
+
   // Cleanup on unmount or when modal closes
   useEffect(() => {
     return () => {
@@ -557,7 +592,14 @@ export function CameraScanner({ isOpen, onClose, onScanComplete }: CameraScanner
             </div>
           ) : (
             <>
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className="w-full h-full object-cover cursor-pointer" 
+                onClick={handleVideoClick}
+              />
 
               {/* Scanning Overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
