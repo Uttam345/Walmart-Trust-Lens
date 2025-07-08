@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { getCurrentLocation } from "../lib/location-utils"
 import { RealtimeCameraScanner } from "./camera/realtime-camera-scanner"
+import { CameraScanner } from "./camera/camera-scanner"
 import { RealtimeEcoScanner } from "./realtime-eco-scanner"
 
 interface WasteItem {
@@ -281,12 +282,40 @@ export function EcoScanner() {
       }
     } catch (error) {
       console.error('AI Analysis Error:', error)
+      
+      // Enhanced error messaging
+      let errorMessage = "Analysis failed. "
+      let fallbackReason = "Unknown error"
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage += "API authentication failed. "
+          fallbackReason = "Authentication error"
+        } else if (error.message.includes('429')) {
+          errorMessage += "Rate limit exceeded. "
+          fallbackReason = "Too many requests"
+        } else if (error.message.includes('500')) {
+          errorMessage += "Server error. "
+          fallbackReason = "Server unavailable"
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage += "Network error. "
+          fallbackReason = "Connection failed"
+        } else {
+          errorMessage += error.message + ". "
+          fallbackReason = error.message
+        }
+      }
+      
       // Enhanced fallback to manual analysis
       setAnalysisDetails({
         processingTime: Date.now() - startTime,
         imageQuality: 'Processing Failed',
-        aiModel: 'Fallback Analysis'
+        aiModel: `Fallback Analysis (${fallbackReason})`
       })
+      
+      // Show user-friendly error message
+      console.warn(errorMessage + "Using fallback analysis.")
+      
       analyzeWaste(file.name)
     } finally {
       setIsAnalyzing(false)
@@ -424,218 +453,81 @@ export function EcoScanner() {
           </CardTitle>
           <p className="text-green-100">Upload a photo or describe your item for instant disposal guidance</p>
         </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          {/* Upload and Input Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Image Upload */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Upload className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-lg">Photo Analysis</h3>
-                <Badge variant="secondary" className="text-xs">AI Powered</Badge>
-              </div>
-              <div className="relative border-2 border-dashed border-green-200 rounded-xl p-6 text-center hover:border-green-300 transition-colors bg-gradient-to-br from-green-50 to-emerald-50">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  capture="environment"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                {uploadedImage ? (
-                  <div className="space-y-3">
-                    <div className="relative w-full max-w-md mx-auto">
-                      <img 
-                        src={uploadedImage} 
-                        alt="Uploaded item" 
-                        className="w-full h-auto max-h-64 object-contain rounded-lg border-2 border-green-200 shadow-sm bg-white"
-                        style={{ minHeight: '128px' }}
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="secondary" className="text-xs bg-white/90 backdrop-blur-sm">
-                          High Quality
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 justify-center">
-                      <Button 
-                        onClick={() => {
-                          setUploadedImage(null)
-                          setSelectedWaste(null)
-                          setAnalysisDetails(null)
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="border-green-300 text-green-700 hover:bg-green-50"
-                      >
-                        Upload Different Image
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          if (uploadedImage) {
-                            const link = document.createElement('a')
-                            link.href = uploadedImage
-                            link.download = 'eco-scan-image.jpg'
-                            link.click()
-                          }
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                      >
-                        <Upload className="w-3 h-3 mr-1" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                      <Camera className="w-8 h-8 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-700 mb-1">Take or upload a photo</p>
-                      <p className="text-sm text-gray-500 mb-3">Get instant AI analysis of your item</p>
-                      <div className="text-xs text-gray-400 mb-3 space-y-1">
-                        <div>💡 Tips for best results:</div>
-                        <div>• Good lighting and clear focus</div>
-                        <div>• Fill the frame with your item</div>
-                        <div>• Max 10MB, JPEG/PNG/WebP</div>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <Button 
-                        onClick={() => setShowRealtimeEcoScanner(true)}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md"
-                      >
-                        <TreePine className="w-4 h-4 mr-2" />
-                        Real-Time Eco Scanner
-                      </Button>
-                      <div className="text-center text-sm text-gray-500">or</div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          onClick={handleCameraOpen}
-                          variant="outline"
-                          className="border-green-200 text-green-700 hover:bg-green-50"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          Camera
-                        </Button>
-                        <Button 
-                          onClick={() => fileInputRef.current?.click()}
-                          variant="outline"
-                          className="border-green-200 text-green-700 hover:bg-green-50"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+      <CardContent className="p-6 space-y-6">
+        {/* Real-Time Eco Scanner Section */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <TreePine className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-lg">Real-Time Eco Scanner</h3>
             </div>
-
-            {/* Manual Input */}
+            <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs w-fit">AI Powered</Badge>
+          </div>
+          
+          <div className="p-4 sm:p-6 border-2 border-green-200 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg">Text Description</h3>
-                <Badge variant="secondary" className="text-xs">Quick Option</Badge>
+              <div className="text-center space-y-3">
+                <div className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
+                  Point your camera at any item to get instant eco-friendly disposal recommendations
+                </div>
+                <div className="text-xs sm:text-sm text-gray-400 mb-3 space-y-1">
+                  <div className="font-medium">💡 Tips for best results:</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 text-left sm:text-center">
+                    <div>• Good lighting and clear focus</div>
+                    <div>• Fill the frame with your item</div>
+                    <div>• Hold steady for analysis</div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-sky-50">
-                <textarea
-                  placeholder="Describe your item... e.g., 'old smartphone with cracked screen', 'cotton t-shirt in good condition', 'empty plastic water bottle'"
-                  value={wasteInput}
-                  onChange={(e) => setWasteInput(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                />
+              <div className="space-y-3">
                 <Button 
-                  onClick={handleManualInput}
-                  className="w-full bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700 shadow-md"
-                  disabled={!wasteInput.trim() || isAnalyzing}
+                  onClick={() => setShowRealtimeEcoScanner(true)}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md text-base sm:text-lg py-3 sm:py-4 px-4 sm:px-6"
                 >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Analyze Item
-                    </>
-                  )}
+                  <TreePine className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                  Start Real-Time Eco Scanner
                 </Button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Quick Tips Section */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Info className="w-5 h-5 text-blue-600" />
-              Scanning Tips
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <Camera className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium text-blue-800">Photo Quality</span>
-                </div>
-                <p className="text-sm text-blue-700">Good lighting and clear focus for best AI analysis</p>
+        {/* Analysis Loading */}
+        {isAnalyzing && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 text-center">
+            <div className="inline-flex items-center gap-3">
+              <div className="relative">
+                <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                <div className="absolute inset-0 w-8 h-8 border-2 border-green-200 rounded-full"></div>
               </div>
-              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <Smartphone className="w-4 h-4 text-green-600" />
-                  <span className="font-medium text-green-800">Item Details</span>
-                </div>
-                <p className="text-sm text-green-700">Include labels, markings, and any damage in frame</p>
+              <div className="text-left">
+                <div className="text-lg font-semibold text-green-800">Analyzing with AI...</div>
+                <div className="text-sm text-green-600">Claude 3.5 Sonnet is examining your item</div>
+              </div>
+            </div>
+            <div className="mt-4 w-full bg-green-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full animate-pulse" style={{width: '75%'}}></div>
+            </div>
+            <div className="mt-3 text-xs text-green-600">
+              🔍 Analyzing condition • 🏷️ Categorizing disposal • 🌍 Calculating impact
+            </div>
+          </div>
+        )}
+
+        {/* Location Status */}
+        {locationError && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-yellow-800 mb-1">Location Services</h4>
+                <p className="text-sm text-yellow-700">{locationError}</p>
               </div>
             </div>
           </div>
-
-          {/* Analysis Loading */}
-          {isAnalyzing && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 text-center">
-              <div className="inline-flex items-center gap-3">
-                <div className="relative">
-                  <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
-                  <div className="absolute inset-0 w-8 h-8 border-2 border-green-200 rounded-full"></div>
-                </div>
-                <div className="text-left">
-                  <div className="text-lg font-semibold text-green-800">Analyzing with AI...</div>
-                  <div className="text-sm text-green-600">Claude 3.5 Sonnet is examining your item</div>
-                  {uploadedImage && (
-                    <div className="text-xs text-green-500 mt-1">High-quality image processing</div>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 w-full bg-green-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full animate-pulse" style={{width: '75%'}}></div>
-              </div>
-              <div className="mt-3 text-xs text-green-600">
-                🔍 Analyzing condition • 🏷️ Categorizing disposal • 🌍 Calculating impact
-              </div>
-            </div>
-          )}
-
-          {/* Location Status */}
-          {locationError && (
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-yellow-800 mb-1">Location Services</h4>
-                  <p className="text-sm text-yellow-700">{locationError}</p>
-                </div>
-              </div>
-            </div>
-          )}
+        )}
         </CardContent>
       </Card>
 
@@ -1014,20 +906,19 @@ export function EcoScanner() {
         </CardContent>
       </Card>
 
-      {/* Real-time Camera Scanner */}
-      <RealtimeCameraScanner 
+      {/* Camera Scanner */}
+      <CameraScanner 
         isOpen={showCamera} 
         onClose={handleCameraClose} 
         onScanComplete={handleCameraScanComplete}
-        mode="eco"
       />
 
       {/* Real-time Eco Scanner Dialog */}
       <Dialog open={showRealtimeEcoScanner} onOpenChange={setShowRealtimeEcoScanner}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <TreePine className="w-5 h-5 text-green-600" />
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <TreePine className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               Real-Time Eco Scanner
             </DialogTitle>
           </DialogHeader>
@@ -1054,7 +945,7 @@ export function EcoScanner() {
                 }
                 setSelectedWaste(wasteItem)
               }}
-              className="min-h-[500px]"
+              className="min-h-[400px] sm:min-h-[500px] rounded-lg"
             />
           </div>
         </DialogContent>

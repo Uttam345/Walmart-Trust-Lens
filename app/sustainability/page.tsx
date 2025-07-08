@@ -2,7 +2,7 @@ import { Header } from "@/components/header"
 import { EcoMetrics } from "@/components/eco-metrics"
 import { EcoTips } from "@/components/eco-tips"
 import { CarbonTracker } from "@/components/carbon-tracker"
-import { EcoScanner } from "@/components/eco-scanner"
+import { EcoScanner } from "@/components/eco-scanner-simple"
 
 export default function SustainabilityPage() {
   return (

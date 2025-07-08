@@ -68,6 +68,21 @@ export function RealtimeEcoScanner({ onResult, className = "" }: RealtimeEcoScan
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
+        
+        // Ensure video starts playing
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch((playError) => {
+              console.error('Video play error:', playError)
+              setCameraError('Video playback failed. Click on video to start manually.')
+            })
+          }
+        }
+        
+        videoRef.current.onerror = (error) => {
+          console.error('Video element error:', error)
+          setCameraError('Video error occurred. Please try again.')
+        }
       }
     } catch (error) {
       console.error('Camera access error:', error)
@@ -182,6 +197,19 @@ export function RealtimeEcoScanner({ onResult, className = "" }: RealtimeEcoScan
     }
   }, [startCamera, stopCamera])
 
+  // Manual video start helper
+  const handleVideoClick = useCallback(async () => {
+    if (videoRef.current) {
+      try {
+        await videoRef.current.play()
+        setCameraError(null)
+      } catch (error) {
+        console.error('Manual video play error:', error)
+        setCameraError('Failed to start video playback.')
+      }
+    }
+  }, [])
+
   // Get category icon and color
   const getCategoryInfo = (category: string) => {
     switch (category) {
@@ -257,6 +285,7 @@ export function RealtimeEcoScanner({ onResult, className = "" }: RealtimeEcoScan
                   playsInline
                   muted
                   className="w-full h-full object-cover"
+                  onClick={handleVideoClick}
                 />
                 
                 {/* Scanning overlay */}
