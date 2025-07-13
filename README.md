@@ -8,6 +8,8 @@ A cutting-edge Next.js application that transforms shopping decisions by combini
 
 **🚀 [View Live Application](https://walmart-trust-lens.vercel.app)**
 
+**🎥 [Watch Demo Video](https://www.youtube.com/watch?v=4jAYX1qHk7o&t=21s)**
+
 Experience authentic social proof scanning and sustainable shopping gamification in action.
 
 ## 🆕 Latest Updates (July 2025)
@@ -348,34 +350,6 @@ components/
 - **Privacy-First Design** - User data handled with enterprise-grade security
 - **GDPR Compliant** - Full compliance with international privacy regulations
 
-## 🚀 Future Roadmap
-
-### **Q3 2025 - Enhanced Mobile Features**
-- **Voice-activated product queries** with speech recognition and hands-free operation
-- **Advanced haptic feedback** for better mobile interaction and accessibility
-- **Augmented Reality (AR) scanning** for immersive product information overlay
-- **Enhanced offline capabilities** with local AI processing and data sync
-
-### **Q4 2025 - Extended Social Features**
-- **Shopping lists sharing** with trusted networks and collaborative planning
-- **Group purchasing coordination** for bulk buying and community deals
-- **Real-time collaboration** on shopping decisions with friends and family
-- **Enhanced privacy controls** with granular social proof data management
-
-### **Q1 2026 - Advanced AI Integration**
-- **Predictive shopping recommendations** based on purchase patterns and preferences
-- **Advanced sustainability scoring** with lifecycle analysis and carbon tracking
-- **Multi-language support** for global accessibility (10+ languages)
-- **Local AI processing** for faster responses and enhanced privacy
-
-### **Q2 2026 - Business Intelligence & Analytics**
-- **Advanced analytics dashboard** for retailers and brands with real-time insights
-- **Supply chain sustainability metrics** with transparency and traceability features
-- **Consumer behavior pattern analysis** with privacy-first approach and GDPR compliance
-- **API marketplace** for third-party integrations and ecosystem expansion
-
----
-
 ## 📈 Performance Metrics & Benchmarks
 
 - **Scan Speed**: < 1.2 seconds for product recognition (optimized with mobile enhancements)
@@ -417,14 +391,6 @@ We welcome contributions from the community! Here's how you can help:
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🏆 Recognition & Awards
-
-- **🌱 Sustainability Leader** - Top 10 Green Tech Innovation 2025
-- **🚀 Tech Excellence** - Next.js Showcase Featured Project
-- **👥 Community Choice** - Most Loved Shopping App (Developer Survey 2025)
 
 ---
 
