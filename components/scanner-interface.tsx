@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, Upload, Search, Star, TrendingUp, Users } from "lucide-react"
-import { CameraScanner } from "./camera/camera-scanner-backup-fixed"
+import { CameraScanner } from "./camera/camera-scanner"
 
 interface SocialProof {
   friendsPurchased?: number

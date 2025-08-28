@@ -10,8 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Walmart TrustLens - Transparent Shopping Intelligence",
   description:
-    "Make informed purchases with transparency and trust. Scan products and see verified reviews, sustainability scores, and community insights.",
-    generator: 'v0.dev'
+    "Make informed purchases with transparency and trust."
 }
 
 export default function RootLayout({
@@ -20,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className} suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <EnhancedScrollBehavior />
         {children}
         <Toaster />

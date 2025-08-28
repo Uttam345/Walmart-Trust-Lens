@@ -1,4 +1,5 @@
 "use client"
+//"use client" is a Next.js App Router directive that marks a file as a client component (runs in the browser). Add it at the very top of the file when you need hooks, state, event handlers, or browser APIs.
 
 import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
@@ -13,7 +14,7 @@ export default function AssistantPage() {
   })
 
   useEffect(() => {
-    // Load user context from localStorage
+    // Load user context from localStorage once the component first mounts
     try {
       const userData = localStorage.getItem("walmart-user-data")
       const scannedHistory = localStorage.getItem("walmart-scan-history")

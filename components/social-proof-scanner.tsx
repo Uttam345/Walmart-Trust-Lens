@@ -5,6 +5,7 @@ import { Camera, Search, X, Loader2, Package, Users, TrendingUp, Star, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useHydrationSafe } from "@/hooks/use-hydration-safe";
 
 interface ProductData {
   id: string;
@@ -37,6 +38,9 @@ const SocialProofScanner = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const codeReaderRef = useRef<any>(null);
+  
+  // Use hydration-safe hook to prevent mismatches
+  const isHydrated = useHydrationSafe();
 
   // Mock product database with social proof data
   const mockProducts: ProductData[] = [
@@ -132,22 +136,36 @@ const SocialProofScanner = () => {
     }
 
     // Generate mock product for unknown barcodes
+    const generateRandomValue = (min: number, max: number, seed: string) => {
+      if (!isHydrated) return min; // Return default value during SSR
+      
+      // Simple seeded random for consistent values
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      const random = Math.abs(hash) / 2147483647;
+      return Math.floor(random * (max - min) + min);
+    };
+
     return {
       id: `unknown_${code}`,
       name: `Product ${code.slice(-6)}`,
-      price: `$${(Math.random() * 20 + 2).toFixed(2)}`,
-      rating: Number((Math.random() * 1.5 + 3.5).toFixed(1)),
-      reviews: Math.floor(Math.random() * 5000 + 100),
+      price: `$${(generateRandomValue(200, 2000, code + "price") / 100).toFixed(2)}`,
+      rating: Number((generateRandomValue(350, 500, code + "rating") / 100).toFixed(1)),
+      reviews: generateRandomValue(100, 5100, code + "reviews"),
       image: "/placeholder.svg?height=120&width=120",
       barcode: code,
       brand: "Unknown Brand",
       category: "General",
       description: "Product information not available",
       socialProof: {
-        friendsPurchased: Math.floor(Math.random() * 5),
-        friendsRecommend: Math.floor(Math.random() * 40 + 60),
-        locationPopularity: Math.floor(Math.random() * 30 + 50),
-        trendingScore: Math.floor(Math.random() * 50 + 30),
+        friendsPurchased: generateRandomValue(0, 5, code + "friends"),
+        friendsRecommend: generateRandomValue(60, 100, code + "recommend"),
+        locationPopularity: generateRandomValue(50, 80, code + "location"),
+        trendingScore: generateRandomValue(30, 80, code + "trending"),
       },
     };
   };

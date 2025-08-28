@@ -17,7 +17,7 @@ export default function ScannerPage() {
             </div>
             <div className="text-left">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Smart Scanner
+                Social Proof Scanner
               </h1>
               <p className="text-gray-600 text-lg">Powered by AI & Social Intelligence</p>
             </div>
@@ -51,14 +51,14 @@ export default function ScannerPage() {
               <Sparkles className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Insights</h3>
-            <p className="text-gray-600 text-sm">Upload any product image and get detailed analysis, features, buying tips, and price comparisons powered by OpenRouter AI</p>
+            <p className="text-gray-600 text-sm">Upload any product image and get detailed analysis, features, buying tips, and price comparisons powered by Gemini-AI</p>
           </div>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-8">
-            {/* Social Proof Scanner */}
+            {/* Social Proof Scanner Component */}
             <SocialProofScanner />
             
             {/* Quick Stats */}
@@ -69,15 +69,15 @@ export default function ScannerPage() {
               </h3>
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 mb-1">247</div>
+                  <div className="text-2xl font-bold text-blue-600 mb-1">250</div>
                   <div className="text-sm text-gray-600">Products Scanned</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-1">89%</div>
+                  <div className="text-2xl font-bold text-green-600 mb-1">90%</div>
                   <div className="text-sm text-gray-600">Match Accuracy</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600 mb-1">1.2k</div>
+                  <div className="text-2xl font-bold text-purple-600 mb-1">1.5k</div>
                   <div className="text-sm text-gray-600">Active Users</div>
                 </div>
               </div>
@@ -87,7 +87,7 @@ export default function ScannerPage() {
           <div className="space-y-6">
             <RecentScans />
             
-            {/* Quick Actions */}
+            {/* Quick Actions
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
@@ -104,7 +104,7 @@ export default function ScannerPage() {
                   <span className="text-green-700 font-medium">Browse Popular</span>
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
