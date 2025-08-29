@@ -1,5 +1,4 @@
 import { Header } from "@/components/header"
-import { EnhancedScannerInterface } from "@/components/enhanced-scanner-interface"
 import { RecentScans } from "@/components/recent-scans"
 import SocialProofScanner from "@/components/social-proof-scanner"
 import { Scan, QrCode, Camera, Sparkles, TrendingUp, Users } from "lucide-react"
@@ -35,7 +34,7 @@ export default function ScannerPage() {
               <QrCode className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Universal Scanning</h3>
-            <p className="text-gray-600 text-sm">Scan barcodes, QR codes, or take photos of any product for instant analysis</p>
+            <p className="text-gray-600 text-sm">Scan barcodes of any product for instant analysis</p>
           </div>
           
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
@@ -51,7 +50,7 @@ export default function ScannerPage() {
               <Sparkles className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Insights</h3>
-            <p className="text-gray-600 text-sm">Upload any product image and get detailed analysis, features, buying tips, and price comparisons powered by Gemini-AI</p>
+            <p className="text-gray-600 text-sm">Scan any product barcode and get detailed analysis, features, buying tips, and price comparisons powered by Gemini-AI</p>
           </div>
         </div>
 

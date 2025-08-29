@@ -31,29 +31,27 @@ const SocialProofScanner = () => {
   const [manualBarcode, setManualBarcode] = useState('');
   const [productData, setProductData] = useState<ProductData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [scannerActive, setScannerActive] = useState(false);
+  const [scannerActive, setScannerActive] = useState(false);                 // Scanner activation status
   const [error, setError] = useState('');
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const codeReaderRef = useRef<any>(null);
-  
-  // Use hydration-safe hook to prevent mismatches
-  const isHydrated = useHydrationSafe();
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);  //Camera-permission status
+
+  const videoRef = useRef<HTMLVideoElement>(null);      //reference to video element for camera feed
+  const streamRef = useRef<MediaStream | null>(null);   //reference to media stream for camera feed
+  const codeReaderRef = useRef<any>(null);              //reference to barcode scanner
+  const isHydrated = useHydrationSafe();                // Use hydration-safe hook to prevent mismatches
 
   // Mock product database with social proof data
   const mockProducts: ProductData[] = [
     {
-      id: "honey123",
-      name: "Great Value Organic Honey",
-      price: "$4.98",
+      id: "DaburHoney-123",
+      name: "Dabur Organic Honey",
+      price: "Rs. 400",
       rating: 4.8,
       reviews: 2847,
-      image: "/placeholder.svg?height=120&width=120",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0iqZw9vnc7UtgRp4F4X6iP9OyR1Zvl6qfGQ&sh=1200",
       barcode: "123456789012",
-      brand: "Great Value",
-      category: "Pantry",
+      brand: "Dabur",
+      category: "Food-Honey",
       description: "Pure organic honey sourced from local beekeepers",
       socialProof: {
         friendsPurchased: 12,
@@ -64,11 +62,11 @@ const SocialProofScanner = () => {
     },
     {
       id: "detergent456",
-      name: "Tide Ultra Concentrated Detergent",
-      price: "$12.97",
+      name: "Tide Ultra Detergent",
+      price: "Rs. 800",
       rating: 4.6,
       reviews: 5234,
-      image: "/placeholder.svg?height=120&width=120",
+      image: "https://www.google.com/imgres?q=tide%20laundry%20detergent&imgurl=https%3A%2F%2Fimages.ctfassets.net%2Fajjw8wywicb3%2F7itBn56qJDuAgKOVba3ZRx%2Fd5499bbcfe1c7c62e7b9f27d93e9de80%2FTide_Powder_Original_hero_SP_748x748.jpg%3Ffm%3Dpng&imgrefurl=https%3A%2F%2Ftide.com%2Fen-us%2Fshop%2Ftype%2Fpowder%2Ftide-original-powder&docid=dzIGfxF9cL4RjM&tbnid=_tRZU7GwF84A-M&vet=12ahUKEwiAneeLna2PAxX2cmwGHQs6GekQM3oECCgQAA..i&w=748&h=748&hcb=2&ved=2ahUKEwiAneeLna2PAxX2cmwGHQs6GekQM3oECCgQAA",
       barcode: "987654321098",
       brand: "Tide",
       category: "Laundry",
@@ -82,11 +80,11 @@ const SocialProofScanner = () => {
     },
     {
       id: "cereal789",
-      name: "Cheerios Original Cereal",
-      price: "$5.48",
+      name: "Fit & Flex Museli",
+      price: "Rs. 400",
       rating: 4.7,
       reviews: 3456,
-      image: "/placeholder.svg?height=120&width=120",
+      image: "https://fitandflex.in/cdn/shop/files/6_1000x.jpg?v=1717227342&width=1946",
       barcode: "456789123456",
       brand: "General Mills",
       category: "Breakfast",
@@ -98,36 +96,34 @@ const SocialProofScanner = () => {
         trendingScore: 82,
       },
     },
-    {
-      id: "milk101",
-      name: "Great Value 2% Milk",
-      price: "$3.28",
-      rating: 4.5,
-      reviews: 1892,
-      image: "/placeholder.svg?height=120&width=120",
-      barcode: "789123456789",
-      brand: "Great Value",
-      category: "Dairy",
-      description: "Fresh 2% reduced fat milk",
-      socialProof: {
-        friendsPurchased: 22,
-        friendsRecommend: 87,
-        locationPopularity: 94,
-        trendingScore: 75,
-      },
-    },
+    // {
+    //   id: "milk101",
+    //   name: "Great Value 2% Milk",
+    //   price: "Rs. 68",
+    //   rating: 4.5,
+    //   reviews: 1892,
+    //   image: "/placeholder.svg?height=120&width=120",
+    //   barcode: "789123456789",
+    //   brand: "Great Value",
+    //   category: "Dairy",
+    //   description: "Fresh 2% reduced fat milk",
+    //   socialProof: {
+    //     friendsPurchased: 22,
+    //     friendsRecommend: 87,
+    //     locationPopularity: 94,
+    //     trendingScore: 75,
+    //   },
+    // },
   ];
 
   // Find product by barcode
   const findProductByBarcode = (code: string): ProductData | null => {
-    // Try exact match first
     let product = mockProducts.find((p) => p.barcode === code);
     
     if (product) {
       return product;
     }
 
-    // Try partial match (last 6 digits)
     const codeEnd = code.slice(-6);
     product = mockProducts.find((p) => p.barcode.includes(codeEnd));
     
@@ -138,8 +134,6 @@ const SocialProofScanner = () => {
     // Generate mock product for unknown barcodes
     const generateRandomValue = (min: number, max: number, seed: string) => {
       if (!isHydrated) return min; // Return default value during SSR
-      
-      // Simple seeded random for consistent values
       let hash = 0;
       for (let i = 0; i < seed.length; i++) {
         const char = seed.charCodeAt(i);
@@ -313,7 +307,7 @@ const SocialProofScanner = () => {
           <h2 className="text-xl font-bold">Social Proof Scanner</h2>
         </div>
         <p className="text-blue-100 text-sm text-center">
-          Scan products to see what your community thinks
+          Scan products to see what your friends and community think
         </p>
       </div>
 

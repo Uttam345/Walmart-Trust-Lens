@@ -6,33 +6,56 @@ import { Heart, MessageCircle, Share, Star, TrendingUp, Users } from "lucide-rea
 export function SocialFeed() {
   const posts = [
     {
-      user: { name: "Sarah M.", avatar: "/placeholder.svg?height=40&width=40", level: "Gold" },
+      user: { name: "Priya Sharma", avatar: "/placeholder.svg?height=40&width=40", level: "Gold" },
       time: "2 hours ago",
       content:
-        "Just discovered this amazing organic honey! The taste is incredible and the price is unbeatable. Highly recommend! 🍯",
-      product: "Great Value Organic Honey",
+        "Found this pure ghee at an amazing price! Perfect for festivals and daily cooking. My family loves the quality!",
+      product: "Amul Pure Cow Ghee 1L",
       rating: 5,
-      likes: 24,
-      comments: 8,
+      likes: 34,
+      comments: 12,
       image: "/placeholder.svg?height=200&width=300",
     },
     {
-      user: { name: "Mike R.", avatar: "/placeholder.svg?height=40&width=40", level: "Silver" },
-      time: "5 hours ago",
+      user: { name: "Rajesh Kumar", avatar: "/placeholder.svg?height=40&width=40", level: "Silver" },
+      time: "4 hours ago",
       content:
-        "Compared 5 different laundry detergents and this one came out on top for both cleaning power and value. Great find!",
-      product: "Tide Ultra Concentrated",
+        "Compared different atta brands and this one gives the softest rotis! Great value for money and my wife approved!",
+      product: "Aashirvaad Whole Wheat Atta 10kg",
       rating: 4,
-      likes: 18,
-      comments: 12,
+      likes: 28,
+      comments: 15,
     },
     {
-      user: { name: "Emma L.", avatar: "/placeholder.svg?height=40&width=40", level: "Platinum" },
-      time: "1 day ago",
+      user: { name: "Arjun Patel", avatar: "/placeholder.svg?height=40&width=40", level: "Gold" },
+      time: "6 hours ago",
       content:
-        "Love how TrustLens helped me avoid a product with poor reviews. Saved me $30 and a lot of disappointment!",
-      likes: 45,
-      comments: 15,
+        "This basmati rice is restaurant quality! Perfect for biryani and pulao. The fragrance is amazing!",
+      product: "India Gate Basmati Rice 5kg",
+      rating: 5,
+      likes: 41,
+      comments: 9,
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      user: { name: "Sneha Rajpoot", avatar: "/placeholder.svg?height=40&width=40", level: "Silver" },
+      time: "8 hours ago",
+      content:
+        "Finally found good quality turmeric powder! My mom tested it and said it's as good as the one from our village. Authentic taste!",
+      product: "Tata Sampann Turmeric Powder 200g",
+      rating: 5,
+      likes: 19,
+      comments: 7,
+    },
+    {
+      user: { name: "Vikram", avatar: "/placeholder.svg?height=40&width=40", level: "Platinum" },
+      time: "12 hours ago",
+      content:
+        "TrustLens helped me choose the best tea brand! The community ratings were spot on. Now enjoying perfect morning chai!",
+      product: "Tata Tea Gold 1kg",
+      rating: 4,
+      likes: 33,
+      comments: 11,
     },
   ]
 
@@ -105,7 +128,7 @@ export function SocialFeed() {
                 <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
                   <span className="flex items-center space-x-1">
                     <TrendingUp className="w-3 h-3 text-green-500" />
-                    <span>+156 purchases influenced</span>
+                    <span>+250 purchases influenced</span>
                   </span>
                   <span className="flex items-center space-x-1">
                     <Users className="w-3 h-3 text-blue-500" />

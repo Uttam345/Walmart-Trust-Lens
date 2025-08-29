@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const requestMessages = messages || []
     
     // Check if API key is properly configured
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    if (!process.env.GEMINI_API_KEY) {
       console.warn('GEMINI_API_KEY is not properly configured, using fallback mode')
       
       const lastUserMessage = requestMessages?.filter((m: any) => m.type === 'user')?.pop()

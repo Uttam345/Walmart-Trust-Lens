@@ -4,7 +4,6 @@ import { Hash, TrendingUp } from "lucide-react"
 export function TrendingTopics() {
   const topics = [
     { tag: "OrganicFood", posts: "1.2K posts" },
-    { tag: "BackToSchool", posts: "856 posts" },
     { tag: "EcoFriendly", posts: "743 posts" },
     { tag: "BudgetFinds", posts: "621 posts" },
     { tag: "HealthyLiving", posts: "589 posts" },
@@ -15,7 +14,7 @@ export function TrendingTopics() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <TrendingUp className="w-5 h-5" />
-          <span>Trending Topics</span>
+          <span>Trending Hashtags</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

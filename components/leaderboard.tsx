@@ -6,35 +6,35 @@ export function Leaderboard() {
   const leaders = [
     {
       rank: 1,
-      name: "Alex Chen",
+      name: "Siddharth Sharma",
       points: 15420,
       avatar: "/placeholder.svg?height=32&width=32",
       level: "Platinum",
     },
     {
       rank: 2,
-      name: "Sarah Johnson",
+      name: "Priya Sharma",
       points: 14890,
       avatar: "/placeholder.svg?height=32&width=32",
       level: "Platinum",
     },
     {
       rank: 3,
-      name: "Mike Rodriguez",
+      name: "Arjun Patel",
       points: 13750,
       avatar: "/placeholder.svg?height=32&width=32",
       level: "Gold",
     },
     {
       rank: 4,
-      name: "Emma Wilson",
+      name: "Sneha Rajpoot",
       points: 12340,
       avatar: "/placeholder.svg?height=32&width=32",
       level: "Gold",
     },
     {
       rank: 5,
-      name: "David Kim",
+      name: "Abhijay Negi",
       points: 11890,
       avatar: "/placeholder.svg?height=32&width=32",
       level: "Gold",
@@ -103,7 +103,7 @@ export function Leaderboard() {
                   <h4 className="font-medium text-blue-900 text-sm">Your Rank</h4>
                   <p className="text-xs text-blue-600">Gold Level</p>
                 </div>
-                <span className="text-sm font-semibold text-blue-600">2,847</span>
+                <span className="text-sm font-semibold text-blue-600">1,557</span>
               </div>
             </div>
           </div>

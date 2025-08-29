@@ -42,3 +42,20 @@ export function useStableRandom(seed?: string) {
 
   return randomValue
 }
+
+
+// 1. Component renders (Server/Client) → isHydrated = false
+// 2. Component mounts (Client only) → useEffect runs → isHydrated = true
+// 3. Component re-renders → returns true
+
+
+
+// 1. Initialize → randomValue = 0.5, call useHydrationSafe()
+// 2. First render → isHydrated = false → useEffect doesn't run → return 0.5
+// 3. After hydration → isHydrated = true → useEffect runs:
+//    a. If seed provided → calculate hash → set deterministic random
+//    b. If no seed → use Math.random() → set true random
+// 4. Component re-renders → return calculated random value
+
+
+// This pattern is essential in Next.js applications to prevent hydration errors while maintaining functionality.

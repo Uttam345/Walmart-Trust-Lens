@@ -19,8 +19,8 @@ function HeaderContent() {
     { href: "/", label: "Home", icon: null },
     { href: "/scanner", label: "Scanner", icon: Scan },
     { href: "/assistant", label: "AI Assistant", icon: MessageCircle },
-    { href: "/social", label: "Community", icon: Users },
     { href: "/sustainability", label: "Eco Hub", icon: Leaf },
+    { href: "/social", label: "Community", icon: Users },
     { href: "/achievements", label: "Achievements", icon: Trophy },
   ]
 
@@ -57,9 +57,9 @@ function HeaderContent() {
               >
                 {item.icon && <item.icon className="w-4 h-4" />}
                 <span>{item.label}</span>
-                {isActive(item.href) && (
+                {/* {isActive(item.href) && (
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
+                )} */} {/* removed active indicator dot for cleaner look */}
               </Link>
             ))}
           </nav>
@@ -68,7 +68,7 @@ function HeaderContent() {
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-full">
               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-yellow-700">2,847k+ Points</span>
+              <span className="text-sm font-medium text-yellow-700">2,500 Points</span>
               <span className="text-xs font-bold text-yellow-600 bg-yellow-200 px-2 py-0.5 rounded-full">GOLD</span>
             </div>
             <Button 
@@ -100,7 +100,7 @@ function HeaderContent() {
           </div>
         </div>
 
-        {/* Modern Dropdown Menu */}
+        {/* Modern Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
           <>
             {/* Backdrop Overlay */}
@@ -124,7 +124,7 @@ function HeaderContent() {
                 </div>
               </div>
 
-              {/* Navigation Items */}
+              {/* Navigation Items in Mobile Menu */}
               <div className="px-3 py-4 space-y-1">
                 {navigationItems.map((item, index) => (
                   <Link
@@ -154,11 +154,11 @@ function HeaderContent() {
                     
                     {/* Label */}
                     <span className="flex-1">{item.label}</span>
-                    
-                    {/* Active Indicator */}
-                    {isActive(item.href) && (
+
+                    {/* Active Indicator is removed */}
+                    {/* {isActive(item.href) && (
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    )}
+                    )} */}
                     
                     {/* Hover Arrow */}
                     <div className={cn(
@@ -180,7 +180,7 @@ function HeaderContent() {
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
-                      <span className="text-sm font-semibold text-yellow-800">2,847k+ Points</span>
+                      <span className="text-sm font-semibold text-yellow-800">2,500+ Points</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -197,7 +197,7 @@ function HeaderContent() {
                     className="w-full bg-white/80 backdrop-blur-sm text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 rounded-xl h-12 font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Sign In to Continue
+                    Sign In
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -255,18 +255,18 @@ function HeaderFallback() {
               <span>AI Assistant</span>
             </Link>
             <Link
-              href="/social"
-              className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all duration-200 flex items-center space-x-2"
-            >
-              <Users className="w-4 h-4" />
-              <span>Community</span>
-            </Link>
-            <Link
               href="/sustainability"
               className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all duration-200 flex items-center space-x-2"
             >
               <Leaf className="w-4 h-4" />
               <span>Eco Hub</span>
+            </Link>
+            <Link
+              href="/social"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all duration-200 flex items-center space-x-2"
+            >
+              <Users className="w-4 h-4" />
+              <span>Community</span>
             </Link>
             <Link
               href="/achievements"
@@ -280,7 +280,7 @@ function HeaderFallback() {
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-full">
               <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <span className="text-sm font-medium text-yellow-700">2,847k+ Points</span>
+              <span className="text-sm font-medium text-yellow-700">2,500+ Points</span>
               <span className="text-xs font-bold text-yellow-600 bg-yellow-200 px-2 py-0.5 rounded-full">GOLD</span>
             </div>
             <Button variant="outline" size="sm" className="bg-white/80 backdrop-blur-sm text-gray-700 border-gray-200 hover:bg-gray-50">

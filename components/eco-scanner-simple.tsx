@@ -81,7 +81,7 @@ export function EcoScanner() {
           </div>
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Eco Scanner
+              Eco-Sustainability Scanner
             </h1>
             <p className="text-gray-600">Real-time AI analysis for proper waste disposal and environmental impact</p>
           </div>

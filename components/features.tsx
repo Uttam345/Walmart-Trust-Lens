@@ -5,7 +5,7 @@ export function Features() {
     {
       icon: Scan,
       title: "Smart Product Scanner",
-      description: "Scan QR codes and barcodes to instantly access detailed product information and community insights",
+      description: "Scan Product barcodes to instantly access detailed product information and community insights",
     },
     {
       icon: Users,

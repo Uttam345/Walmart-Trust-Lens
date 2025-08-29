@@ -6,7 +6,7 @@ export function ProgressStats() {
     {
       icon: Trophy,
       title: "Total Points",
-      value: "2,847",
+      value: "1,557",
       change: "+127 this week",
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",

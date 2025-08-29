@@ -1,6 +1,4 @@
 "use client"
-
-// Inspired by react-hot-toast library
 import * as React from "react"
 
 import type {
@@ -9,7 +7,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 1000000    //1000 seconds
 
 type ToasterToast = ToastProps & {
   id: string
@@ -192,3 +190,24 @@ function useToast() {
 }
 
 export { useToast, toast }
+
+//This system provides a robust, centralized toast notification system with automatic cleanup and React integration.
+// Complete Flow Example
+// Creating a Toast:
+
+// 1. Call toast({ title: "Success!" })
+// 2. Generate ID and create control functions
+// 3. Dispatch ADD_TOAST action
+// 4. Reducer adds toast to state array
+// 5. All listeners (React components) get notified
+// 6. UI updates to show toast
+
+// Dismissing a Toast:
+
+// 1. Call dismiss(toastId) or toast closes via UI
+// 2. Dispatch DISMISS_TOAST action
+// 3. Reducer sets open: false and queues for removal
+// 4. UI shows closing animation
+// 5. After delay, REMOVE_TOAST action fires
+// 6. Reducer removes toast from state
+// 7. UI updates to hide toast completely

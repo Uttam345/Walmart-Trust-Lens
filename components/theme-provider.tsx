@@ -9,3 +9,6 @@ import {
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
+
+
+//This component provides a context for managing and applying themes(light or dark) throughout the application.

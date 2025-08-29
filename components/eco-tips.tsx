@@ -6,7 +6,7 @@ export function EcoTips() {
     {
       icon: Leaf,
       title: "Choose Organic",
-      description: "Look for USDA Organic certified products to reduce pesticide impact.",
+      description: "Look for FSAAI Organic certified products to reduce pesticide impact.",
     },
     {
       icon: Recycle,

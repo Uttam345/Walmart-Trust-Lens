@@ -3,8 +3,8 @@ import { Users, MessageSquare, Star, TrendingUp } from "lucide-react"
 
 export function CommunityStats() {
   const stats = [
-    { icon: Users, label: "Active Members", value: "2.8M", color: "text-blue-600" },
-    { icon: MessageSquare, label: "Reviews Today", value: "15.2K", color: "text-green-600" },
+    { icon: Users, label: "Active Members", value: "2.5K", color: "text-blue-600" },
+    { icon: MessageSquare, label: "Reviews Today", value: "150", color: "text-green-600" },
     { icon: Star, label: "Avg Rating", value: "4.3", color: "text-yellow-600" },
     { icon: TrendingUp, label: "Growth", value: "+12%", color: "text-purple-600" },
   ]
@@ -12,7 +12,7 @@ export function CommunityStats() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Community Stats</CardTitle>
+        <CardTitle>Community Growth</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

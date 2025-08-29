@@ -35,15 +35,15 @@ export function Hero() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">10M+</div>
+              <div className="text-2xl font-bold text-blue-600 mb-1">10K+</div>
               <div className="text-sm text-gray-600">Products Scanned</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-1">2.5M lbs</div>
+              <div className="text-2xl font-bold text-green-600 mb-1">2.5 kT</div>
               <div className="text-sm text-gray-600">CO₂ Saved</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-1">500K+</div>
+              <div className="text-2xl font-bold text-purple-600 mb-1">500+</div>
               <div className="text-sm text-gray-600">Active Users</div>
             </div>
           </div>

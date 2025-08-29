@@ -6,7 +6,7 @@ export function EcoMetrics() {
     {
       icon: Leaf,
       title: "Carbon Saved",
-      value: "127 lbs",
+      value: "127 kT",
       change: "+23% this month",
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -22,7 +22,7 @@ export function EcoMetrics() {
     {
       icon: Droplets,
       title: "Water Saved",
-      value: "2,450 gal",
+      value: "2,450 litres",
       change: "+18% this month",
       color: "text-cyan-600",
       bgColor: "bg-cyan-50",
@@ -30,7 +30,7 @@ export function EcoMetrics() {
     {
       icon: Zap,
       title: "Energy Efficient",
-      value: "89%",
+      value: "69%",
       change: "of purchases",
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",

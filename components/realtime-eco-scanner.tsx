@@ -35,9 +35,9 @@ interface RealTimeEcoResult {
   actionRequired?: 'immediate' | 'plan' | 'research' | 'none'
 }
 
-interface RealtimeEcoScannerProps {
-  onResult?: (result: RealTimeEcoResult) => void
-  className?: string
+interface RealtimeEcoScannerProps {                      //Component Props interface
+  onResult?: (result: RealTimeEcoResult) => void         //Optional callback for results
+  className?: string                                     //Optional className for styling
 }
 
 export function RealtimeEcoScanner({ onResult, className = "" }: RealtimeEcoScannerProps) {
@@ -439,3 +439,15 @@ export function RealtimeEcoScanner({ onResult, className = "" }: RealtimeEcoScan
     </div>
   )
 }
+
+
+//  Scanning Flow:
+
+// 1. User Trigger: User clicks "Start Scanning" or "Single Scan"
+// 2. State Update: setIsScanning(true) or direct call to captureAndAnalyze()
+// 3. Interval Setup: For continuous scanning, interval created every 4 seconds
+// 4. Frame Capture: Video frame drawn to hidden canvas
+// 5. Image Processing: Canvas converted to base64 JPEG
+// 6. API Call: Image sent to /api/realtime-scan endpoint
+// 7. Result Processing: Response parsed and state updated
+// 8. UI Update: Results displayed, stats updated, callback triggered

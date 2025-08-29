@@ -25,7 +25,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
     {
       id: 'welcome',
       type: 'bot',
-      content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
+      content: "Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
     }
   ])
   const [input, setInput] = useState("")
@@ -41,12 +41,11 @@ export function AIChat({ context }: { context?: ChatContext }) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages])     //Triggers effect whenever messages array changes
 
   useEffect(() => {
-    // Focus input on mount
     inputRef.current?.focus()
-  }, [])
+  }, [])             // Focus input field when component mounts
 
   useEffect(() => {
     // Set hydrated state after client-side hydration
@@ -82,7 +81,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
       {
         id: 'welcome',
         type: 'bot',
-        content: "👋 Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
+        content: "Welcome to Walmart TrustLens! I'm your AI shopping assistant. I can help you find products, compare prices, get recommendations, and make informed purchasing decisions with transparency and trust. What are you looking for today?",
       }
     ])
     toast({
@@ -337,7 +336,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
           </div>
           <div>
             <h2 className="font-semibold text-gray-900 text-sm md:text-base">AI Shopping Assistant</h2>
-            <p className="text-xs text-gray-500 hidden md:block">Powered by Claude 3.5 Sonnet</p>
+            <p className="text-xs text-gray-500 hidden md:block">Powered by Gemini Pro 2.5</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -460,7 +459,7 @@ export function AIChat({ context }: { context?: ChatContext }) {
                 variant="outline" 
                 size="sm" 
                 className="text-xs whitespace-nowrap h-8 px-3"
-                onClick={() => setInput("I need a laptop under $500")}
+                onClick={() => setInput("I need a laptop under 50000")}
               >
                 <Sparkles className="w-3 h-3 mr-1" />
                 Find Budget Options
